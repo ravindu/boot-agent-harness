@@ -62,8 +62,11 @@ GET  /api/agent/runs/{runId}/events       → SSE stream of steps
 | Approval UI | curl + checked-in `.http` files first; a small web page later (M5) if diffs need it | No new dependency |
 | Live Claude tests | Tagged `live`, run only with `./mvnw verify -Plive` | An exported API key never costs money by accident |
 | Vector store schema | Flyway creates `vector_store` (`initialize-schema=false`) | "Flyway owns the schema" |
+| Persistence (M1) | `JdbcClient` + records, JSONB for message history; optimistic locking as explicit `UPDATE … WHERE version = ?` | SQL stays visible; no extra dependency |
+| Refusals (M1) | No server-side fallback; a refusal ends the run with status `REFUSED` and its category in the trace | Keeps the gateway on the stable API; revisit if evals show false refusals |
+| Doc source (M1) | Raw `.adoc` pages and `include-code` Java examples fetched from `spring-projects/spring-boot` at tag `v4.1.1` at ingestion time; tests use small fixtures | Nothing third-party vendored; `./mvnw verify` stays offline |
+| Citations (M1) | Tool results label chunks `S1…Sn`; the model cites `[Sn]`; the harness maps markers to doc URLs and flags unknown markers as invented citations | Grounding becomes measurable (M2 metric) |
 
 ## Open questions
 
-- Persistence style for runs/steps/approvals (JPA with `@Version` vs. `JdbcClient` with explicit SQL): decide at the start of M1.
-- Server-side refusal fallbacks for `claude-sonnet-5-5`: decide in M1 when `LlmGateway` gets retries.
+- None right now.
