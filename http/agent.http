@@ -1,0 +1,15 @@
+### Ingest the configured docs (Boot 4.1.1 Testing + Data) into pgvector. Takes about a minute.
+POST http://localhost:8080/api/ingestion/runs
+
+### Ask a question. Calls Claude: needs ANTHROPIC_API_KEY in the app's environment (costs a few cents).
+POST http://localhost:8080/api/agent/runs
+Content-Type: application/json
+
+{
+  "question": "How do I use @ServiceConnection with Testcontainers?"
+}
+
+> {% client.global.set("runId", response.body.runId); %}
+
+### Trace of the last run: every model call and tool call with tokens, cost and latency
+GET http://localhost:8080/api/agent/runs/{{runId}}
