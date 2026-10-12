@@ -2,6 +2,9 @@ spring:
   application:
     name: spring-docs-agent
   # Local dev database from compose.yaml (docker-compose up -d). Tests use Testcontainers instead.
+  mvc:
+    problemdetails:
+      enabled: true   # RFC 9457 error bodies
   datasource:
     url: jdbc:postgresql://localhost:5433/docsagent
     username: docsagent
@@ -19,6 +22,8 @@ docsagent:
   anthropic:
     # ANTHROPIC_API_KEY is read by the SDK from the environment, never from Spring config.
     agent-model: claude-sonnet-5-5
+    agent-effort: medium
+    agent-max-tokens: 16000
     helper-model: claude-haiku-5-5
     timeout: 60s
     max-retries: 2
@@ -27,6 +32,19 @@ docsagent:
     max-total-tokens: 200000
     max-cost-usd: 0.50
     run-timeout: 2m
+  # USD per million tokens (Claude API list prices, checked 2026-10-12). Cache write = 5-minute TTL (1.25x input).
+  pricing:
+    models:
+      claude-sonnet-5-5:
+        input-per-mtok: 2.00
+        output-per-mtok: 10.00
+        cache-write-per-mtok: 2.50
+        cache-read-per-mtok: 0.20
+      claude-haiku-5-5:
+        input-per-mtok: 0.10
+        output-per-mtok: 0.50
+        cache-write-per-mtok: 0.125
+        cache-read-per-mtok: 0.01
   docs:
     raw-base-url: https://raw.githubusercontent.com/spring-projects/spring-boot
     tag: v4.1.1
