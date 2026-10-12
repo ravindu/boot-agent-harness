@@ -1,0 +1,32 @@
+[[testing.testcontainers]]
+= Testcontainers
+
+The https://www.testcontainers.org/[Testcontainers] library manages services running inside Docker containers.
+
+[[testing.testcontainers.service-connections]]
+== Service Connections
+
+A service connection is a connection to any remote service.
+Add the javadoc:org.springframework.boot.testcontainers.service.connection.ServiceConnection[format=annotation] annotation to the container field.
+See configprop:spring.datasource.url[] and xref:#testing.testcontainers.dynamic-properties[dynamic properties].
+
+include-code::MyIntegrationTests[]
+
+include-code::DoesNotExist[]
+
+[[testing.testcontainers.dynamic-properties]]
+=== Dynamic Properties
+
+Use javadoc:org.springframework.test.context.DynamicPropertySource[format=annotation] when no service connection exists.
+
+[source,yaml]
+----
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost/test
+----
+
+[NOTE]
+====
+Prefer "`service connections`" where possible.
+====
