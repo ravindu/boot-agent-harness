@@ -27,3 +27,22 @@ docsagent:
     max-total-tokens: 200000
     max-cost-usd: 0.50
     run-timeout: 2m
+  docs:
+    raw-base-url: https://raw.githubusercontent.com/spring-projects/spring-boot
+    tag: v4.1.1
+    boot-version: 4.1.1
+    site-base-url: https://docs.spring.io/spring-boot/4.1/reference
+    # M1 subset: the "Testing" and "Data" sections of the reference guide
+    pages:
+      - testing/index
+      - testing/test-scope-dependencies
+      - testing/spring-applications
+      - testing/spring-boot-applications
+      - testing/testcontainers
+      - testing/test-utilities
+      - testing/test-modules
+      - data/index
+      - data/sql
+      - data/nosql
+  ingestion:
+    max-words-per-chunk: 200
