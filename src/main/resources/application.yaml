@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: spring-docs-agent
+  # Local dev database from compose.yaml (docker-compose up -d). Tests use Testcontainers instead.
+  datasource:
+    url: jdbc:postgresql://localhost:5433/docsagent
+    username: docsagent
+    password: docsagent
+  ai:
+    vectorstore:
+      pgvector:
+        initialize-schema: false   # Flyway owns the schema (V1__vector_store.sql)
+        schema-validation: true    # fail at startup if the table doesn't match what PgVectorStore expects
+        dimensions: 384
+        index-type: hnsw
+        distance-type: cosine_distance
+
+docsagent:
+  anthropic:
+    # ANTHROPIC_API_KEY is read by the SDK from the environment, never from Spring config.
+    agent-model: claude-sonnet-5-5
+    helper-model: claude-haiku-5-5
+    timeout: 60s
+    max-retries: 2
+  agent:
+    max-turns: 10
+    max-total-tokens: 200000
+    max-cost-usd: 0.50
+    run-timeout: 2m
