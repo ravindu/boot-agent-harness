@@ -13,7 +13,7 @@ Why this use case: the owner is a Spring Boot expert (can spot hallucinations an
 | # | Milestone | Concepts | Status |
 |---|---|---|---|
 | M0 | Project setup: `pom.xml`, compose, Testcontainers, config properties, Anthropic SDK smoke call | Project skeleton | done |
-| M1 | Hand-written agent loop with one tool (`searchDocs`) over one version of the Boot reference docs; ingestion (read → chunk → embed → store); answers with citations; every step traced to a table | Agent loop, tool use, ingestion, chunking, embeddings, grounding | **next** |
+| M1 | Hand-written agent loop with one tool (`searchDocs`) over one version of the Boot reference docs; ingestion (read → chunk → embed → store); answers with citations; every step traced to a table | Agent loop, tool use, ingestion, chunking, embeddings, grounding | **code done; live runs pending** (see Progress log) |
 | M2 | Eval harness: ~30 golden questions with expected answers and sources, a runner, retrieval hit rate, LLM-as-judge score, cost per run | Evaluation, regression testing | todo |
 | M3 | Context management (trim tool results, summarize long chats), budgets, retries/rate limits, prompt caching, conversation memory; **`askUser` tool (first human-in-the-loop)** | Context engineering, limits, caching, HITL pause/resume | todo |
 | M4 | Retrieval quality: multiple Boot versions with version metadata and filtering, structure-aware chunking (keep code blocks whole), hybrid search (pgvector + Postgres full-text), reranking; more tools (`searchIssues`, `getReleaseNotes`, `compareVersions`); structured output | Metadata filtering, hybrid search, reranking, structured output | todo |
@@ -66,6 +66,24 @@ GET  /api/agent/runs/{runId}/events       → SSE stream of steps
 | Refusals (M1) | No server-side fallback; a refusal ends the run with status `REFUSED` and its category in the trace | Keeps the gateway on the stable API; revisit if evals show false refusals |
 | Doc source (M1) | Raw `.adoc` pages and `include-code` Java examples fetched from `spring-projects/spring-boot` at tag `v4.1.1` at ingestion time; tests use small fixtures | Nothing third-party vendored; `./mvnw verify` stays offline |
 | Citations (M1) | Tool results label chunks `S1…Sn`; the model cites `[Sn]`; the harness maps markers to doc URLs and flags unknown markers as invented citations | Grounding becomes measurable (M2 metric) |
+| Chunking (M1) | Split at `[[anchor]]` headings, ~200 words per chunk with a breadcrumb prefix, `include-code` examples inlined | all-MiniLM-L6-v2 embeds only the first ~256 tokens |
+| Run statuses (M1) | `COMPLETED`, `MAX_TURNS_REACHED`, `BUDGET_EXCEEDED`, `TIMED_OUT`, `TRUNCATED`, `REFUSED`, `FAILED`; limits checked before every model call | A run never ends silently |
+| Agent request (M1) | `claude-sonnet-5-5`, effort `medium`, `max_tokens` 16000, tools `strict: true`, system prompt in `prompts/agent-system.txt` | M2 measures whether `high` effort pays off |
+| Pricing (M1) | USD per MTok in `docsagent.pricing.models` (checked 2026-10-12); startup fails if a configured model has no price | Cost per run without hard-coded prices |
+| No new starters (M1) | `RestClient.builder()` instead of `spring-boot-starter-restclient`; MockMvc built from the context instead of `spring-boot-starter-webmvc-test` | Boot 4 split these into modules; plain spring-web/spring-test are enough |
+
+## Progress log
+
+Newest first. Lets a new session pick up where the last one stopped.
+
+- **2026-10-12, M1 (branch `feature/m1-agent-loop`, local commits, not pushed):**
+  - Done: ingestion (`retrieval/`), tools (`tool/`), agent loop (`agent/`), trace tables V2 + `JdbcRunRecorder` (`trace/`), REST API (`api/`), `http/agent.http`. `./mvnw verify` green: 34 unit tests, 7 ITs.
+  - Real docs check (network only): 10 pages → 119 sections → 161 chunks, all 93 `include-code` examples resolved.
+  - Pending, needs a Console API key (owner runs these; Claude Code doesn't use the key):
+    - `ANTHROPIC_API_KEY=… ./mvnw verify -Plive -Dit.test=InPromptBaselineIT`: step 0 baseline, ~$0.12. Record its numbers here.
+    - `ANTHROPIC_API_KEY=… ./mvnw verify -Plive -Dit.test=AgentLiveIT`: real question, must cite `testing.testcontainers.service-connections`. A few cents.
+  - Then: mark M1 done, push the branch, open a PR.
+  - Known limits, by design for M1: requests are synchronous, the timeout is checked only between steps, a single call can overshoot the budget, and code blocks can be split across chunks (M4).
 
 ## Open questions
 
