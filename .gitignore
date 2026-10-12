@@ -1,0 +1,16 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Local / secrets ###
+CLAUDE.local.md
+.env
+*.env
+
+### OS ###
+.DS_Store
