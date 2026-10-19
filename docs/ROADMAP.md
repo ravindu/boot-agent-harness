@@ -76,6 +76,11 @@ GET  /api/agent/runs/{runId}/events       → SSE stream of steps
 
 Newest first. Lets a new session pick up where the last one stopped.
 
+- **2026-10-13:** M1 architecture diagram added at `docs/diagrams/architecture-m1.html` (diagram-design skill). Redraw it when a milestone changes the topology.
+  - Ingestion explained in `docs/ingestion.md` (+ `docs/diagrams/ingestion-pipeline.html`). Real ingestion against compose Postgres: 161 chunks.
+  - Finding: the ONNX tokenizer truncates at **128 tokens**, not the ~256 the Chunker assumes. 133 of 161 chunks are longer; on average ~54% of a chunk shapes its vector. See Open questions.
+  - `docs/ingestion.md` gained a beginner theory section (RAG, embeddings, cosine distance, why a second model, where 384 comes from, choosing a model) with measured examples.
+
 - **2026-10-12, M1 (branch `feature/m1-agent-loop`, local commits, not pushed):**
   - Done: ingestion (`retrieval/`), tools (`tool/`), agent loop (`agent/`), trace tables V2 + `JdbcRunRecorder` (`trace/`), REST API (`api/`), `http/agent.http`. `./mvnw verify` green: 34 unit tests, 7 ITs.
   - Real docs check (network only): 10 pages → 119 sections → 161 chunks, all 93 `include-code` examples resolved.
@@ -87,4 +92,5 @@ Newest first. Lets a new session pick up where the last one stopped.
 
 ## Open questions
 
-- None right now.
+- **Embedding window (found 2026-10-13):** `all-MiniLM-L6-v2`'s bundled `tokenizer.json` truncates at 128 tokens, so most chunks are only partly embedded (`docs/ingestion.md`, Step 5). Options: raise the tokenizer max length via `TransformersEmbeddingModel` tokenizer options (the model was trained on 256), size chunks by tokens, or move to Voyage AI. Decide with the M2 retrieval hit rate, not one question.
+- **Model download on every start (found 2026-10-13):** Spring AI caches the 90 MB ONNX model in a new random temp dir per start (17 copies so far). A fixed cache directory via Spring AI's transformers embedding cache property would make restarts and ITs faster. Needs a config change; owner to approve.

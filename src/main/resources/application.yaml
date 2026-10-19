@@ -23,7 +23,7 @@ docsagent:
     # ANTHROPIC_API_KEY is read by the SDK from the environment, never from Spring config.
     agent-model: claude-sonnet-5-5
     agent-effort: medium
-    agent-max-tokens: 16000
+    agent-max-tokens: 10000
     helper-model: claude-haiku-5-5
     timeout: 60s
     max-retries: 2

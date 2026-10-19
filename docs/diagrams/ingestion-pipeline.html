@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingestion Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@700&family=Inter:wght@500;600&family=Geist+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDF1F3;   /* Mist */
+    --paper-2: #FFFFFF; /* Talc */
+    --ink: #000000;     /* Onyx */
+    --muted: #003D4F;   /* Wave */
+    --accent: #F2617A;  /* Flamingo */
+    --link: #47A1AD;    /* Sapphire */
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
+  main { max-width: 1160px; margin: 0 auto; padding: 40px 16px 48px; }
+  .eyebrow { font: 600 12px/1 Inter, sans-serif; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 12px; }
+  h1 { font: 700 34px/1.15 Bitter, Georgia, serif; margin: 0 0 8px; }
+  .lede { font: 500 15px/1.5 Inter, sans-serif; margin: 0 0 28px; max-width: 72ch; }
+  .lede code { font: 500 13px "Geist Mono", ui-monospace, monospace; }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; min-width: 1120px; height: auto; }
+
+  .mask { fill: var(--paper); }
+  .node { fill: var(--paper-2); stroke: var(--muted); stroke-width: 1; }
+  .node.focal { stroke: var(--accent); stroke-width: 2; }
+  .node.external { stroke: var(--link); stroke-width: 1.5; }
+  .node.store { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 6 3; }
+  .tag-box { fill: var(--paper); }
+  .tag-box.focal { fill: var(--accent); }
+  .tag { font: 600 9px Inter, sans-serif; letter-spacing: .08em; fill: var(--ink); }
+  .step { font: 600 9px Inter, sans-serif; letter-spacing: .08em; fill: var(--ink); }
+  .name { font: 600 14px Inter, sans-serif; fill: var(--ink); }
+  .sub { font: 500 11px Inter, sans-serif; fill: var(--ink); }
+  .sub.mono { font: 500 10.5px "Geist Mono", ui-monospace, monospace; }
+
+  .arrow { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+  .arrow.dashed { stroke-dasharray: 5 4; }
+  .alabel { font: 600 10px Inter, sans-serif; letter-spacing: .06em; fill: var(--ink); }
+
+  .callout { font: 500 12px Inter, sans-serif; fill: var(--ink); }
+  .callout-rule { stroke: var(--accent); stroke-width: 2; }
+  .legend { font: 500 11px Inter, sans-serif; fill: var(--ink); }
+  .legend-rule { stroke: var(--muted); stroke-width: 1; opacity: .3; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Spring Docs Agent · Ingestion</p>
+  <h1>From AsciiDoc to vectors</h1>
+  <p class="lede">What <code>POST /api/ingestion/runs</code> does for each configured page: read it from GitHub, split it into sections and chunks, give each chunk a stable id, embed it locally and upsert it into pgvector.</p>
+
+  <div class="scroll">
+  <svg viewBox="0 76 1120 464" role="img" aria-labelledby="ingestion-pipeline-title ingestion-pipeline-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="ingestion-pipeline-title">Ingestion pipeline</title>
+    <desc id="ingestion-pipeline-desc">Each docs page is fetched from GitHub, parsed into anchored sections, split into breadcrumb-prefixed chunks, turned into documents with deterministic ids, embedded by the local ONNX model and upserted into the vector_store table after the page's old chunks are deleted.</desc>
+    <defs>
+      <marker id="ip-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#003D4F"/>
+      </marker>
+    </defs>
+
+    <!-- Arrows (drawn before nodes) -->
+    <!-- 1 GitHub -> 2 Parser -->
+    <line class="arrow" x1="320" y1="140" x2="418" y2="140" marker-end="url(#ip-arrow)"/>
+    <rect class="mask" x="328" y="119" width="84" height="12"/>
+    <text class="alabel" x="370" y="128.5" text-anchor="middle">ADOC + JAVA</text>
+
+    <!-- 2 Parser -> 3 Chunker -->
+    <line class="arrow" x1="700" y1="140" x2="798" y2="140" marker-end="url(#ip-arrow)"/>
+    <rect class="mask" x="710" y="119" width="80" height="12"/>
+    <text class="alabel" x="750" y="128.5" text-anchor="middle">DOCSECTION</text>
+
+    <!-- 3 Chunker -> 4 IngestionService -->
+    <line class="arrow" x1="940" y1="180" x2="940" y2="298" marker-end="url(#ip-arrow)"/>
+    <rect class="mask" x="950" y="234" width="80" height="12"/>
+    <text class="alabel" x="952" y="243.5">CHUNK TEXT</text>
+
+    <!-- 4 IngestionService -> 5 ONNX -->
+    <line class="arrow" x1="800" y1="340" x2="702" y2="340" marker-end="url(#ip-arrow)"/>
+    <rect class="mask" x="714" y="319" width="72" height="12"/>
+    <text class="alabel" x="750" y="328.5" text-anchor="middle">DOCUMENTS</text>
+
+    <!-- 5 ONNX -> 6 vector_store -->
+    <line class="arrow" x1="420" y1="340" x2="322" y2="340" marker-end="url(#ip-arrow)"/>
+    <rect class="mask" x="334" y="319" width="72" height="12"/>
+    <text class="alabel" x="370" y="328.5" text-anchor="middle">UPSERT ROWS</text>
+
+    <!-- 4 IngestionService -> 6 vector_store (delete first) -->
+    <path class="arrow dashed" d="M940,380 L940,412 Q940,420 932,420 L188,420 Q180,420 180,412 L180,382" marker-end="url(#ip-arrow)"/>
+    <rect class="mask" x="504" y="428" width="112" height="12"/>
+    <text class="alabel" x="560" y="437.5" text-anchor="middle">DELETE BY PAGE</text>
+
+    <!-- Nodes -->
+    <!-- 1 GitHub -->
+    <g>
+      <rect class="mask" x="40" y="100" width="280" height="80"/>
+      <rect class="node external" x="40" y="100" width="280" height="80"/>
+      <rect class="tag-box" x="52" y="110" width="68" height="14"/>
+      <text class="tag" x="58" y="120.5">1 · READ</text>
+      <text class="name" x="52" y="144">spring-boot repo @ v4.1.1</text>
+      <text class="sub" x="52" y="162">GitHubDocsSource · page + include-code</text>
+    </g>
+
+    <!-- 2 Parser -->
+    <g>
+      <rect class="mask" x="420" y="100" width="280" height="80"/>
+      <rect class="node" x="420" y="100" width="280" height="80"/>
+      <rect class="tag-box" x="432" y="110" width="68" height="14"/>
+      <text class="tag" x="438" y="120.5">2 · PARSE</text>
+      <text class="name" x="432" y="144">AsciiDocParser</text>
+      <text class="sub" x="432" y="162">split at [[anchor]] · inline examples</text>
+    </g>
+
+    <!-- 3 Chunker (focal) -->
+    <g>
+      <rect class="mask" x="800" y="100" width="280" height="80"/>
+      <rect class="node focal" x="800" y="100" width="280" height="80"/>
+      <rect class="tag-box focal" x="812" y="110" width="68" height="14"/>
+      <text class="tag" x="818" y="120.5">3 · CHUNK</text>
+      <text class="name" x="812" y="144">Chunker</text>
+      <text class="sub" x="812" y="162">≤ 200 words · breadcrumb prefix</text>
+    </g>
+
+    <!-- 4 IngestionService -->
+    <g>
+      <rect class="mask" x="800" y="300" width="280" height="80"/>
+      <rect class="node" x="800" y="300" width="280" height="80"/>
+      <rect class="tag-box" x="812" y="310" width="80" height="14"/>
+      <text class="tag" x="818" y="320.5">4 · IDENTIFY</text>
+      <text class="name" x="812" y="344">IngestionService.toDocument</text>
+      <text class="sub" x="812" y="362">name-based UUID · 7 metadata keys</text>
+    </g>
+
+    <!-- 5 ONNX embedding (focal) -->
+    <g>
+      <rect class="mask" x="420" y="300" width="280" height="80"/>
+      <rect class="node focal" x="420" y="300" width="280" height="80"/>
+      <rect class="tag-box focal" x="432" y="310" width="68" height="14"/>
+      <text class="tag" x="438" y="320.5">5 · EMBED</text>
+      <text class="name" x="432" y="344">all-MiniLM-L6-v2 (ONNX, local)</text>
+      <text class="sub" x="432" y="362">tokenize → model → mean-pool → 384 floats</text>
+    </g>
+
+    <!-- 6 vector_store -->
+    <g>
+      <rect class="mask" x="40" y="300" width="280" height="80"/>
+      <rect class="node store" x="40" y="300" width="280" height="80"/>
+      <rect class="tag-box" x="52" y="310" width="64" height="14"/>
+      <text class="tag" x="58" y="320.5">6 · STORE</text>
+      <text class="name" x="52" y="344">vector_store (pgvector)</text>
+      <text class="sub mono" x="52" y="362">vector(384) · HNSW · cosine</text>
+    </g>
+
+    <!-- Callout: measured truncation -->
+    <line class="callout-rule" x1="432" y1="208" x2="432" y2="272"/>
+    <text class="callout" x="444" y="220">Measured: the tokenizer keeps only the first</text>
+    <text class="callout" x="444" y="236">128 tokens. 133 of 161 chunks are longer, so on</text>
+    <text class="callout" x="444" y="252">average ~54% of a chunk shapes its vector.</text>
+    <text class="callout" x="444" y="268">Claude still receives the full chunk text.</text>
+
+    <!-- Legend strip -->
+    <line class="legend-rule" x1="20" y1="476" x2="1100" y2="476"/>
+    <rect x="20" y="496" width="20" height="14" fill="#FFFFFF" stroke="#F2617A" stroke-width="2"/>
+    <text class="legend" x="48" y="507">Focus: chunk size vs. embedding window</text>
+    <rect x="300" y="496" width="20" height="14" fill="#FFFFFF" stroke="#003D4F" stroke-width="1"/>
+    <text class="legend" x="328" y="507">Our code</text>
+    <rect x="412" y="496" width="20" height="14" fill="#FFFFFF" stroke="#47A1AD" stroke-width="1.5"/>
+    <text class="legend" x="440" y="507">External source</text>
+    <rect x="564" y="496" width="20" height="14" fill="#FFFFFF" stroke="#003D4F" stroke-width="1.5" stroke-dasharray="6 3"/>
+    <text class="legend" x="592" y="507">PostgreSQL table</text>
+    <line class="arrow" x1="716" y1="503" x2="748" y2="503" marker-end="url(#ip-arrow)"/>
+    <text class="legend" x="756" y="507">Data handed on</text>
+    <line class="arrow dashed" x1="868" y1="503" x2="900" y2="503" marker-end="url(#ip-arrow)"/>
+    <text class="legend" x="908" y="507">Runs first, per page</text>
+  </svg>
+  </div>
+</main>
+</body>
+</html>
