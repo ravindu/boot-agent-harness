@@ -78,6 +78,7 @@ public final class GoldenSet {
         Expect expect = enumValue(Expect.class, requiredText(fields, "expect", id), id);
         String question = requiredText(fields, "question", id);
         List<String> sources = textList(fields, "expectedSources", id);
+        List<String> expectedText = textList(fields, "expectedText", id);
         List<String> keyPoints = textList(fields, "keyPoints", id);
         List<String> mustNotSay = textList(fields, "mustNotSay", id);
 
@@ -87,10 +88,10 @@ public final class GoldenSet {
         if (expect == Expect.ANSWER && sources.isEmpty()) {
             throw new IllegalArgumentException(id + ": expect 'answer' needs at least one expectedSources anchor");
         }
-        if (expect == Expect.DECLINE && !sources.isEmpty()) {
-            throw new IllegalArgumentException(id + ": expect 'decline' must have no expectedSources");
+        if (expect == Expect.DECLINE && (!sources.isEmpty() || !expectedText.isEmpty())) {
+            throw new IllegalArgumentException(id + ": expect 'decline' must have no expectedSources or expectedText");
         }
-        return new GoldenQuestion(id, category, expect, question, sources, keyPoints, mustNotSay);
+        return new GoldenQuestion(id, category, expect, question, sources, expectedText, keyPoints, mustNotSay);
     }
 
     private static String requiredText(Map<?, ?> fields, String key, String id) {

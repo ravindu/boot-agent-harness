@@ -7,6 +7,8 @@ import java.util.List;
  *
  * @param expectedSources section anchors that contain the answer; retrieval is a hit when
  *                        {@code searchDocs} returned at least one of them. Empty when {@code expect} is DECLINE
+ * @param expectedText    phrases from the chunk(s) that hold the answer; passage hit = all of them were retrieved.
+ *                        Optional; finer than {@code expectedSources}, because a section can have several chunks
  * @param keyPoints       facts a correct answer must contain (or, for DECLINE, the expected behaviour); checked by the judge
  * @param mustNotSay      statements that make an answer wrong, e.g. a Boot 3 package name
  */
@@ -16,6 +18,7 @@ public record GoldenQuestion(
         Expect expect,
         String question,
         List<String> expectedSources,
+        List<String> expectedText,
         List<String> keyPoints,
         List<String> mustNotSay) {
 

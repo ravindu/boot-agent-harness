@@ -51,12 +51,18 @@ public record EvalReport(String label, String startedAt, Map<String, String> con
         md.append("\n\n## Scorecard\n\n| Metric | Result |\n|---|---|\n");
         row(md, "**Passed overall**", ratio(results, QuestionResult::passed));
         row(md, "Answer questions passed", ratio(answers, QuestionResult::passed));
-        row(md, "Retrieval hit rate (expected section retrieved)", ratio(answers, r -> Boolean.TRUE.equals(r.retrievalHit())));
+        row(md, "Retrieval hit rate, section (a chunk of the expected section retrieved)",
+                ratio(answers, r -> Boolean.TRUE.equals(r.retrievalHit())));
+        List<QuestionResult> withPassage = answers.stream().filter(r -> r.passageHit() != null).toList();
+        row(md, "Retrieval hit rate, passage (the chunk with the answer retrieved)",
+                ratio(withPassage, r -> Boolean.TRUE.equals(r.passageHit())));
         row(md, "Cited an expected section", ratio(answers, r -> Boolean.TRUE.equals(r.citedExpected())));
         int met = answers.stream().mapToInt(QuestionResult::keyPointsMet).sum();
         int total = answers.stream().mapToInt(QuestionResult::keyPointsTotal).sum();
         row(md, "Key points found (answer questions)", fraction(met, total));
         row(md, "Declines handled (out-of-scope + injection)", ratio(declines, QuestionResult::passed));
+        row(md, "Uncertain judge verdicts (check by hand)", results.stream().filter(r -> !r.uncertain().isEmpty()).count()
+                + " questions, " + results.stream().filter(r -> r.judgeRounds() == 2).count() + " re-judged");
         row(md, "Invented citations", String.valueOf(results.stream().mapToInt(r -> r.inventedCitations().size()).sum()));
         row(md, "Cost: agent / judge / total", "$" + agentCost() + " / $" + judgeCost() + " / $" + agentCost().add(judgeCost()));
         row(md, "Avg turns / avg latency", "%.1f / %.1f s".formatted(
@@ -79,21 +85,27 @@ public record EvalReport(String label, String startedAt, Map<String, String> con
                 md.append("- ").append(r.note()).append('\n');
             }
             if (r.retrievalHit() != null) {
-                md.append("- retrieval: ").append(r.retrievalHit() ? "hit" : "**miss**")
-                        .append(", retrieved ").append(r.retrievedAnchors()).append('\n');
+                md.append("- retrieval: section ").append(r.retrievalHit() ? "hit" : "**miss**");
+                if (r.passageHit() != null) {
+                    md.append(", passage ").append(r.passageHit() ? "hit" : "**miss**");
+                }
+                md.append(", retrieved ").append(r.retrievedAnchors()).append('\n');
             }
+            md.append("- searches: ").append(r.searchQueries()).append('\n');
+            r.uncertain().forEach(item -> md.append("- ⚠️ uncertain: ").append(item).append('\n'));
             r.missedKeyPoints().forEach(point -> md.append("- missing: ").append(point).append('\n'));
             r.violations().forEach(point -> md.append("- said: ").append(point).append('\n'));
             md.append("- run: `").append(r.runId()).append("`\n");
         }
 
-        md.append("\n## All questions\n\n| Question | Expect | Passed | Retrieval | Cited | Key points | Turns | Cost |\n")
-                .append("|---|---|---|---|---|---|---|---|\n");
+        md.append("\n## All questions\n\n| Question | Expect | Passed | Section | Passage | Cited | Key points | Turns | Cost |\n")
+                .append("|---|---|---|---|---|---|---|---|---|\n");
         for (QuestionResult r : results) {
             md.append("| ").append(r.id())
                     .append(" | ").append(r.expect().name().toLowerCase())
-                    .append(" | ").append(r.passed() ? "✅" : "❌")
+                    .append(" | ").append(r.passed() ? "✅" : "❌").append(r.uncertain().isEmpty() ? "" : " ⚠️")
                     .append(" | ").append(mark(r.retrievalHit()))
+                    .append(" | ").append(mark(r.passageHit()))
                     .append(" | ").append(mark(r.citedExpected()))
                     .append(" | ").append(r.keyPointsMet()).append('/').append(r.keyPointsTotal())
                     .append(" | ").append(r.turns())

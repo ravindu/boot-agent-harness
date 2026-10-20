@@ -13,6 +13,8 @@ import com.tw.docsagent.llm.LlmGateway;
 import com.tw.docsagent.retrieval.ingest.IngestionProperties;
 import com.tw.docsagent.retrieval.ingest.IngestionService;
 import com.tw.docsagent.retrieval.source.DocsSourceProperties;
+import com.tw.docsagent.trace.RunTrace;
+import com.tw.docsagent.trace.RunTraceRepository;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -22,6 +24,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -77,6 +80,9 @@ class EvalRunIT {
     JdbcClient jdbc;
 
     @Autowired
+    RunTraceRepository traces;
+
+    @Autowired
     Clock clock;
 
     @Test
@@ -87,6 +93,8 @@ class EvalRunIT {
 
         ingestionService.ingestAll();
         assertExpectedSectionsWereIngested(questions);
+        Map<String, String> chunkTextById = chunkTexts();
+        assertEachExpectedTextIsInExactlyOneChunk(questions, chunkTextById);
 
         AnswerJudge judge = new AnswerJudge(llmGateway, anthropic.helperModel(), costCalculator);
         List<QuestionResult> results = new ArrayList<>();
@@ -104,10 +112,11 @@ class EvalRunIT {
                     judgeError = e.getMessage();
                 }
             }
-            QuestionResult result = EvalScorer.score(question, run, latencyMs, judgement, judgeError);
+            EvalScorer.Retrieval retrieval = new EvalScorer.Retrieval(searchQueries(run), chunkTextById);
+            QuestionResult result = EvalScorer.score(question, run, latencyMs, retrieval, judgement, judgeError);
             results.add(result);
-            System.out.printf("[%d/%d] %s %s retrieval=%s keyPoints=%d/%d cost=$%s%n", results.size(), questions.size(),
-                    result.passed() ? "PASS" : "FAIL", result.id(), result.retrievalHit(),
+            System.out.printf("[%d/%d] %s %s section=%s passage=%s keyPoints=%d/%d cost=$%s%n", results.size(),
+                    questions.size(), result.passed() ? "PASS" : "FAIL", result.id(), result.retrievalHit(), result.passageHit(),
                     result.keyPointsMet(), result.keyPointsTotal(), result.agentCostUsd().add(result.judgeCostUsd()));
         }
 
@@ -128,6 +137,37 @@ class EvalRunIT {
                 .flatMap(q -> q.expectedSources().stream().filter(a -> !ingested.contains(a)).map(a -> q.id() + ": " + a))
                 .toList();
         assertThat(unknown).as("expectedSources anchors that are not in the ingested docs").isEmpty();
+    }
+
+    private Map<String, String> chunkTexts() {
+        Map<String, String> texts = new LinkedHashMap<>();
+        jdbc.sql("SELECT id::text AS id, content FROM vector_store")
+                .query((rs, row) -> Map.entry(rs.getString("id"), rs.getString("content")))
+                .list()
+                .forEach(e -> texts.put(e.getKey(), e.getValue()));
+        return texts;
+    }
+
+    /** A phrase matching no chunk can never hit; one matching several can't tell which chunk was found. */
+    private static void assertEachExpectedTextIsInExactlyOneChunk(List<GoldenQuestion> questions, Map<String, String> chunks) {
+        List<String> normalized = chunks.values().stream().map(EvalScorer::normalize).toList();
+        List<String> problems = questions.stream()
+                .flatMap(q -> q.expectedText().stream().map(phrase -> {
+                    String p = EvalScorer.normalize(phrase);
+                    long matches = normalized.stream().filter(text -> text.contains(p)).count();
+                    return matches == 1 ? null : q.id() + ": '" + phrase + "' matches " + matches + " chunks";
+                }))
+                .filter(Objects::nonNull)
+                .toList();
+        assertThat(problems).as("expectedText phrases must each occur in exactly one ingested chunk").isEmpty();
+    }
+
+    /** From the run's trace: what Claude actually searched for. */
+    private List<String> searchQueries(AgentRunResult run) {
+        return traces.find(run.runId()).map(RunTrace::steps).orElse(List.of()).stream()
+                .filter(step -> "searchDocs".equals(step.toolName()) && step.toolInput() != null)
+                .map(step -> String.valueOf(step.toolInput().get("query")))
+                .toList();
     }
 
     private Map<String, String> config() {

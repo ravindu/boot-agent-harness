@@ -12,6 +12,9 @@
 #   question         asked exactly as written; phrase it the way a developer would, not with the docs' words
 #   expectedSources  section anchors (vector_store metadata 'anchor') that contain the answer.
 #                    Retrieval hit = searchDocs returned at least one of them. Empty for expect: decline
+#   expectedText     optional, answer questions only; phrases from the chunk(s) that hold the answer.
+#                    Passage hit = every phrase occurs in some retrieved chunk (whitespace-insensitive).
+#                    Each phrase must occur in exactly one ingested chunk; EvalRunIT checks this before any API call
 #   keyPoints        facts a correct answer must contain, one per item; the LLM judge checks each
 #                    (for expect: decline, describe the expected behaviour instead)
 #   mustNotSay       optional; statements that make the answer wrong, e.g. a Boot 3 package or an old property name
@@ -28,6 +31,8 @@ questions:
     question: How do I point my integration tests at a database running in a Docker container without hard-coding its URL?
     expectedSources:
       - testing.testcontainers.service-connections
+    expectedText:
+      - '@ServiceConnection static Neo4jContainer neo4j'
     keyPoints:
       - Annotate the container field (a static @Container field in a @Testcontainers test) with @ServiceConnection
       - Spring Boot then creates a ConnectionDetails bean for the container, which takes precedence over connection properties such as spring.datasource.url
@@ -39,6 +44,8 @@ questions:
     question: What does @DataJpaTest set up in Boot 4, and which module do I need for it?
     expectedSources:
       - testing.spring-boot-applications.autoconfigured-spring-data-jpa
+    expectedText:
+      - '`@DataJpaTest` annotation from the `spring-boot-data-jpa-test` module'
     keyPoints:
       - "@DataJpaTest comes from the spring-boot-data-jpa-test module"
       - It scans @Entity classes, configures Spring Data JPA repositories, and an embedded database if one is on the classpath
@@ -67,6 +74,8 @@ questions:
     question: Is there a way to dynamically supply configuration values derived from a containerized service into my Spring test environment?
     expectedSources:
       - testing.testcontainers.dynamic-properties
+    expectedText:
+      - 'A static `@DynamicPropertySource` method allows adding dynamic property values'
     keyPoints:
       - Use @DynamicPropertySource on a static method inside the test class
       - The method receives a DynamicPropertyRegistry parameter to add property overrides dynamically
@@ -78,6 +87,8 @@ questions:
     question: How can I swap out a real Spring bean with a mock in my slice test without manually writing a configuration class?
     expectedSources:
       - testing.spring-boot-applications.mocking-beans
+    expectedText:
+      - '`@MockitoBean` annotation that can be used to define a Mockito mock'
     keyPoints:
       - Use @MockitoBean to replace an existing bean in the ApplicationContext with a Mockito mock
       - "@MockitoBean comes from Spring Framework (not Spring Boot); the Spring Framework docs cover the details"
@@ -88,10 +99,12 @@ questions:
     question: How do I wrap a spy around a real Spring-managed bean for verification during tests?
     expectedSources:
       - testing.spring-boot-applications.mocking-beans
+    expectedText:
+      - '`@MockitoSpyBean` can be used to define a Mockito spy'
     keyPoints:
       - Use @MockitoSpyBean on a field in your test class
       - It wraps the existing bean defined in the ApplicationContext with a Mockito spy
-      - It allows verifying interactions while retaining the original bean behavior
+      - "@MockitoSpyBean is a Spring Framework annotation; the Boot docs refer to the Spring Framework documentation for details"
 
   - id: web-slice-testing
     category: how-to
@@ -99,6 +112,8 @@ questions:
     question: Which annotation should I use if I only want to test my REST endpoints with MockMvc without loading the full application context?
     expectedSources:
       - testing.spring-boot-applications.spring-mvc-tests
+    expectedText:
+      - 'use the `@WebMvcTest` annotation from the `spring-boot-webmvc-test` module'
     keyPoints:
       - Annotate the test class with @WebMvcTest
       - It auto-configures MockMvc and scans controller beans (@Controller, @RestController)
@@ -110,10 +125,12 @@ questions:
     question: How do I automatically generate API documentation snippets using MockMvc during unit tests?
     expectedSources:
       - testing.spring-boot-applications.autoconfigured-spring-restdocs.with-mock-mvc
+    expectedText:
+      - 'calls `alwaysDo` with this result handler'
     keyPoints:
       - Use @AutoConfigureRestDocs on the test class
       - It automatically configures MockMvc to capture documentation snippets using Spring REST Docs
-      - Each MockMvc call then generates the default snippets automatically
+      - Defining a RestDocumentationResultHandler bean makes every MockMvc call generate the default snippets (the auto-configuration calls alwaysDo with it)
 
   - id: rest-test-client-boot4
     category: version-specific
@@ -121,6 +138,9 @@ questions:
     question: In a Boot 4 test that starts the real server, what client should I use to call it and assert on the responses?
     expectedSources:
       - testing.spring-boot-applications.with-running-server
+    expectedText:
+      - '`RestTestClient` by annotating the test class with `@AutoConfigureRestTestClient`'
+      - 'class MyRandomPortRestTestClientAssertJTests'
     keyPoints:
       - Annotate the test class with @AutoConfigureRestTestClient and autowire a RestTestClient
       - The client resolves relative links against the running server and has a dedicated API for verifying responses
@@ -132,6 +152,8 @@ questions:
     question: How do I launch a real HTTP server on an available free port during integration tests?
     expectedSources:
       - testing.spring-boot-applications.with-running-server
+    expectedText:
+      - 'an available port is picked at random each time your test runs'
     keyPoints:
       - Set webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT on @SpringBootTest
       - Inject the assigned port with @LocalServerPort, or call the server through a RestTestClient (@AutoConfigureRestTestClient) or WebTestClient (@AutoConfigureWebTestClient)
@@ -143,9 +165,11 @@ questions:
     expectedSources:
       - testing.utilities.test-rest-template
       - testing.spring-boot-applications.with-running-server
+    expectedText:
+      - 'by not throwing exceptions on 4xx and 5xx errors'
     keyPoints:
       - TestRestTemplate comes from the spring-boot-resttestclient module (plus spring-boot-restclient); with RANDOM_PORT or DEFINED_PORT it is injected by annotating the test class with @AutoConfigureTestRestTemplate
-      - It is a fault-tolerant wrapper around RestTemplate that does not throw exceptions on 4xx/5xx HTTP statuses
+      - "It is fault tolerant: it does not throw exceptions on 4xx and 5xx responses; errors are checked through the returned ResponseEntity"
       - Supports basic authentication out-of-the-box via builder methods or root URI configuration
     mustNotSay:
       - That TestRestTemplate is auto-configured for every RANDOM_PORT test without @AutoConfigureTestRestTemplate (Boot 3 behaviour)
@@ -157,6 +181,8 @@ questions:
     expectedSources:
       - testing.spring-boot-applications.detecting-configuration
       - testing.spring-boot-applications.excluding-configuration
+    expectedText:
+      - 'a nested `@TestConfiguration` class is used in addition to your application''s primary configuration'
     keyPoints:
       - Annotate a nested static class inside the test class with @TestConfiguration
       - Beans defined inside @TestConfiguration complement (rather than replace) primary application configuration
@@ -168,6 +194,8 @@ questions:
     question: What annotation focuses exclusively on testing raw JDBC queries and JdbcTemplate without initializing full JPA or web layers?
     expectedSources:
       - testing.spring-boot-applications.autoconfigured-jdbc
+    expectedText:
+      - '`@JdbcTest` from the `spring-boot-jdbc-test` module'
     keyPoints:
       - Use @JdbcTest on the test class
       - "@JdbcTest comes from the spring-boot-jdbc-test module"
@@ -180,6 +208,8 @@ questions:
     question: How can I test my JSON serialization and deserialization mapping in isolation?
     expectedSources:
       - testing.spring-boot-applications.json-tests
+    expectedText:
+      - 'use the `@JsonTest` annotation from the `spring-boot-test-autoconfigure` module'
     keyPoints:
       - Annotate the test class with @JsonTest
       - Auto-configures JSON marshaling/unmarshaling tools like Jackson JacksonTester, GsonTester, or JsonbTester
@@ -191,6 +221,8 @@ questions:
     question: How do I force @DataJpaTest to run against a real database instance instead of replacing it with an embedded in-memory database?
     expectedSources:
       - testing.spring-boot-applications.autoconfigured-spring-data-jpa
+    expectedText:
+      - '@AutoConfigureTestDatabase(replace = Replace.NONE)'
     keyPoints:
       - Annotate the test class with @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
       - Instructs Spring Boot not to override configured datasource properties with an embedded database
@@ -201,6 +233,8 @@ questions:
     question: How can I assert on what my code prints to System.out or System.err in a JUnit test?
     expectedSources:
       - testing.utilities.output-capture
+    expectedText:
+      - 'add `@ExtendWith(OutputCaptureExtension.class)` and inject `CapturedOutput`'
     keyPoints:
       - Add @ExtendWith(OutputCaptureExtension.class) to the test
       - Inject CapturedOutput as a constructor or test method parameter and assert on it
@@ -210,16 +244,19 @@ questions:
     question: My test suite seems to share one in-memory database across different application contexts. How do I give each context its own embedded database?
     expectedSources:
       - data.sql.datasource.embedded
+    expectedText:
+      - 'set `spring.datasource.generate-unique-name` to `true`'
     keyPoints:
       - Set spring.datasource.generate-unique-name to true
       - By default the same embedded database is reused by the whole test suite, regardless of the number of application contexts
-      - Spring Boot auto-configures embedded H2, HSQL and Derby (deprecated) databases without a connection URL; spring-jdbc is required
   - id: connection-pooling-default
     category: concept
     expect: answer
     question: What is the default connection pool used by Spring Boot Data Starters, and how does auto-detection order work?
     expectedSources:
       - data.sql.datasource.connection-pool
+    expectedText:
+      - 'We prefer HikariCP for its performance and concurrency.'
     keyPoints:
       - HikariCP is the default production connection pool preferred by Spring Boot
       - "Spring Boot checks classpath availability in order: HikariCP, Tomcat JDBC, Commons DBCP2, Oracle UCP"
@@ -234,6 +271,8 @@ questions:
     question: Can Spring manage my Testcontainers containers as beans instead of static fields in each test class?
     expectedSources:
       - testing.testcontainers.spring-beans
+    expectedText:
+      - 'To declare a container as a bean, add a `@Bean` method to your test configuration'
     keyPoints:
       - Declare the container in a @Bean method of a test configuration class
       - Import that configuration in the test class, then inject and use the container
@@ -244,6 +283,8 @@ questions:
     question: How do I connect my Data Redis test to a Testcontainers Redis instance in Spring Boot 4?
     expectedSources:
       - testing.testcontainers.service-connections
+    expectedText:
+      - '| `DataRedisConnectionDetails` | Containers of type `RedisContainer`'
     keyPoints:
       - Annotate the static RedisContainer (or RedisStackContainer) field with @ServiceConnection
       - Spring Boot automatically provides a DataRedisConnectionDetails bean for the container
@@ -333,6 +374,8 @@ questions:
     question: Which test annotation should I use if I want to test my outbound HTTP client calls using MockRestServiceServer?
     expectedSources:
       - testing.spring-boot-applications.autoconfigured-rest-client
+    expectedText:
+      - 'use the `@RestClientTest` annotation from the `spring-boot-restclient-test` module'
     keyPoints:
       - Use @RestClientTest, from the spring-boot-restclient-test module in Boot 4
       - It auto-configures Jackson, GSON and Jsonb support, a RestTemplateBuilder and a RestClient.Builder, and adds MockRestServiceServer support

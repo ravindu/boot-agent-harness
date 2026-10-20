@@ -17,6 +17,7 @@ class GoldenSetTest {
                 expect: answer
                 question: How do I connect tests to a container?
                 expectedSources: [testing.testcontainers.service-connections]
+                expectedText: ['@ServiceConnection static Neo4jContainer']
                 keyPoints: [Use @ServiceConnection]
             """;
 
@@ -37,6 +38,7 @@ class GoldenSetTest {
         assertThat(q.category()).isEqualTo(Category.HOW_TO);
         assertThat(q.expect()).isEqualTo(Expect.ANSWER);
         assertThat(q.expectedSources()).containsExactly("testing.testcontainers.service-connections");
+        assertThat(q.expectedText()).containsExactly("@ServiceConnection static Neo4jContainer");
         assertThat(q.keyPoints()).containsExactly("Use @ServiceConnection");
         assertThat(q.mustNotSay()).isEmpty();
     }
@@ -51,7 +53,10 @@ class GoldenSetTest {
     @Test
     void declineQuestionsMustNotHaveExpectedSources() {
         assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("expect: answer", "expect: decline")))
-                .hasMessageContaining("expect 'decline' must have no expectedSources");
+                .hasMessageContaining("expect 'decline' must have no expectedSources or expectedText");
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("expect: answer", "expect: decline")
+                .replace("expectedSources: [testing.testcontainers.service-connections]", "expectedSources: []")))
+                .hasMessageContaining("expect 'decline' must have no expectedSources or expectedText");
     }
 
     @Test

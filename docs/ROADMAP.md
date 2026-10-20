@@ -90,7 +90,13 @@ Newest first. Lets a new session pick up where the last one stopped.
   - 2026-10-21: **runner built** (`AnswerJudge`, `EvalScorer`, `EvalReport`, `EvalRunIT`; `AgentRunResult.retrieved` added). `./mvnw verify` green: 65 tests. Not yet run live.
   - **Baseline run (2026-10-20, `evals/reports/2026-10-20T032440Z-baseline.md`):** 21/28 passed (75%); answers 13/20, declines 8/8, retrieval hit 20/20 (section level), key points 48/57, 0 invented citations, $0.557 total, 2.1 turns, 7.3 s avg.
   - Triage of the 7 failures: **2 retrieval at chunk level** (`testcontainers-service-connection`: right section, but not the chunk with the `@ServiceConnection` example; `rest-test-client-boot4`: example split across chunks), **1 judge false negative** (`data-jpa-test-boot4`: the answer states the missed point), **4 golden-set key points** that go beyond the docs or the question (`spy-existing-bean`, `rest-docs-integration`, `test-rest-template-usage`, `embedded-database-per-context`).
-  - Lesson: the section-level retrieval hit rate is too coarse (100% while two answers lacked the passage they needed). Then the first experiment: the 128-token embedding window (Open questions).
+  - Lesson: the section-level retrieval hit rate is too coarse (100% while two answers lacked the passage they needed).
+  - **Eval fixes after the baseline (2026-10-20):**
+    1. Golden set: 4 key points corrected against the doc text (`spy-existing-bean`, `rest-docs-integration`, `test-rest-template-usage`, `embedded-database-per-context`). The 2 retrieval failures and `data-jpa-test-boot4` unchanged on purpose.
+    2. Judge: every "present" verdict must quote the answer (checked in code), a failing round 1 gets an independent round 2, an item passes only if both rounds pass it, disagreements are reported as uncertain.
+    3. `expectedText` on all 20 answer questions (each phrase verified to occur in exactly one chunk) → new **passage hit rate**; the report also stores Claude's `searchDocs` queries and the retrieved chunk ids per question.
+    - `./mvnw verify` green: 73 tests.
+  - Next (owner): re-run the baseline, `-Deval.label=baseline-v2` (~$0.56). Expected: ~25–26/28, passage hit below 100%, the 2 retrieval failures still failing. This becomes the reference for the 128-token experiment. Then the first experiment: the 128-token embedding window (Open questions).
   - Originally planned next (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
 
 - **2026-10-19, M1 live results (runs by the owner on 2026-10-13, both live ITs passed):**
