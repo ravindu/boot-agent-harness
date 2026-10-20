@@ -6,6 +6,7 @@ import static com.tw.docsagent.agent.ScriptedResponses.text;
 import static com.tw.docsagent.agent.ScriptedResponses.toolUse;
 import static com.tw.docsagent.agent.ScriptedResponses.toolUseResponse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -112,7 +113,7 @@ class AgentLoopTest {
         assertThat(result.status()).isEqualTo(RunStatus.COMPLETED);
         assertThat(result.answer()).isEqualTo("Annotate the container field with @ServiceConnection [S1].");
         assertThat(result.citations()).extracting("label", "url").containsExactly(
-                org.assertj.core.groups.Tuple.tuple("S1", "https://docs/1"));
+                tuple("S1", "https://docs/1"));
         assertThat(result.inventedCitations()).isEmpty();
         assertThat(result.turns()).isEqualTo(2);
         assertThat(result.usage().input()).isEqualTo(3000);
@@ -208,6 +209,21 @@ class AgentLoopTest {
 
         assertThat(result.citations()).extracting("label").containsExactly("S1");
         assertThat(result.inventedCitations()).containsExactly("S7");
+    }
+
+    @Test
+    void resultListsEveryRetrievedSourceNotOnlyTheCitedOnes() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(
+                        toolUse("toolu_a", "searchDocs", Map.of("query", "a")),
+                        toolUse("toolu_b", "searchDocs", Map.of("query", "b"))),
+                response(StopReason.END_TURN, 10, text("Only the second one helped [S2].")));
+
+        AgentRunResult result = loop().run("q");
+
+        assertThat(result.citations()).extracting("label").containsExactly("S2");
+        assertThat(result.retrieved()).extracting("label", "url").containsExactly(
+                tuple("S1", "https://docs/1"), tuple("S2", "https://docs/2"));
     }
 
     @Test

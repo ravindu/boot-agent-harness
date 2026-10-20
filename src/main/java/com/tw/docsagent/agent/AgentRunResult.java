@@ -10,6 +10,7 @@ import java.util.UUID;
  * @param answer       final text; null unless COMPLETED (or partial text for TRUNCATED)
  * @param citations    sources the answer cited that were really retrieved
  * @param inventedCitations cited labels that were never retrieved (grounding failure)
+ * @param retrieved    every chunk shown to Claude during the run, cited or not (the eval's retrieval hit rate uses it)
  * @param turns        model calls made
  */
 public record AgentRunResult(
@@ -19,6 +20,7 @@ public record AgentRunResult(
         String answer,
         List<Source> citations,
         List<String> inventedCitations,
+        List<Source> retrieved,
         int turns,
         TokenUsage usage,
         BigDecimal costUsd) {

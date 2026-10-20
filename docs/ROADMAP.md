@@ -14,7 +14,7 @@ Why this use case: the owner is a Spring Boot expert (can spot hallucinations an
 |---|---|---|---|
 | M0 | Project setup: `pom.xml`, compose, Testcontainers, config properties, Anthropic SDK smoke call | Project skeleton | done |
 | M1 | Hand-written agent loop with one tool (`searchDocs`) over one version of the Boot reference docs; ingestion (read → chunk → embed → store); answers with citations; every step traced to a table | Agent loop, tool use, ingestion, chunking, embeddings, grounding | done |
-| M2 | Eval harness: ~30 golden questions with expected answers and sources, a runner, retrieval hit rate, LLM-as-judge score, cost per run | Evaluation, regression testing | **in progress**: golden-set format done, owner writing questions |
+| M2 | Eval harness: ~30 golden questions with expected answers and sources, a runner, retrieval hit rate, LLM-as-judge score, cost per run | Evaluation, regression testing | **in progress**: golden set (28) and runner done; baseline run pending |
 | M3 | Context management (trim tool results, summarize long chats), budgets, retries/rate limits, prompt caching, conversation memory; **`askUser` tool (first human-in-the-loop)** | Context engineering, limits, caching, HITL pause/resume | todo |
 | M4 | Retrieval quality: multiple Boot versions with version metadata and filtering, structure-aware chunking (keep code blocks whole), hybrid search (pgvector + Postgres full-text), reranking; more tools (`searchIssues`, `getReleaseNotes`, `compareVersions`); structured output | Metadata filtering, hybrid search, reranking, structured output | todo |
 | M5 | Migration agent: migrate a small sample Boot 3 project to Boot 4 with `readFile`, `editFile` (**requires approval**), `runBuild` (Docker sandbox); fix-until-green loop | Side-effecting tools, HITL approvals, sandboxing, self-verification | todo |
@@ -71,6 +71,10 @@ GET  /api/agent/runs/{runId}/events       → SSE stream of steps
 | Agent request (M1) | `claude-sonnet-5-5`, effort `medium`, `max_tokens` 10000 (owner changed it from 16000 on 2026-10-19), tools `strict: true`, system prompt in `prompts/agent-system.txt` | M2 measures whether `high` effort pays off |
 | Pricing (M1) | USD per MTok in `docsagent.pricing.models` (checked 2026-10-12); startup fails if a configured model has no price | Cost per run without hard-coded prices |
 | Golden set (M2) | `src/test/resources/evals/golden-set.yaml`, loaded by `eval.GoldenSet` (test scope) with SnakeYAML from spring-boot-starter; fields `id`, `category`, `expect` (answer/decline), `question`, `expectedSources` (anchors), `keyPoints`, `mustNotSay`; strict validation in `GoldenSetTest` | YAML is easiest for the owner to write; no new dependency; a typo fails the build |
+| Eval runner (M2) | `EvalRunIT` (tag `live`): fresh Testcontainers DB → ingest → fail fast on unknown anchors → one agent run per question → judge → `EvalScorer` → `evals/reports/<time>-<label>.md/.json`. Flags `-Deval.label=…`, `-Deval.only=id,id` | Same code path as production runs, every run traced; reports are committed so runs can be compared |
+| Judge (M2) | `claude-haiku-5-5`, effort medium, structured outputs (`output_config.format` JSON schema); grades only the owner's key points / must-not-say, never its own Spring knowledge; the answer is passed as untrusted data | Cheap, checkable verdicts; no forced `tool_choice` (rejected by 5.5 models) |
+| Pass rules (M2) | answer: COMPLETED + no invented citations + all key points + no must-not-say. decline: same checklist, or REFUSED. Retrieval hit is reported separately and doesn't decide the pass | Separates "search failed" from "answer failed" |
+| `AgentRunResult.retrieved` (M2) | Every chunk shown to Claude in the run, cited or not | Needed for the retrieval hit rate; also visible in the API response |
 | No new starters (M1) | `RestClient.builder()` instead of `spring-boot-starter-restclient`; MockMvc built from the context instead of `spring-boot-starter-webmvc-test` | Boot 4 split these into modules; plain spring-web/spring-test are enough |
 
 ## Progress log
@@ -83,7 +87,9 @@ Newest first. Lets a new session pick up where the last one stopped.
   - 2026-10-20: owner added 24 questions. Review against the ingested docs: fixed indentation and one unquoted colon (both broke parsing), 6 non-existent anchors, and key points the Boot 4 docs contradict (`TestRestTemplate` needs `@AutoConfigureTestRestTemplate`, `DataRedisConnectionDetails`, `@JdbcTest` module). 4 questions the docs don't cover (`@TestPropertySource`, `@Nested`, `@Sql` seeding, `@MockBean`) were replaced by owner's choice with doc-backed ones (`RestTestClient`, `OutputCaptureExtension`, embedded DB per context, containers as beans).
   - Golden set now: **27 questions** (19 answer, 8 decline), every anchor verified to exist. Owner writes the last 3.
   - Owner added 4 more; 3 dropped at the owner's request because the ingested docs don't cover them (RestTemplateBuilder timeouts, cache config, cache testing). Kept `rest-client-test-slice` with Boot 4 key points. **28 questions** (20 answer, 8 decline).
-  - Next (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
+  - 2026-10-21: **runner built** (`AnswerJudge`, `EvalScorer`, `EvalReport`, `EvalRunIT`; `AgentRunResult.retrieved` added). `./mvnw verify` green: 65 tests. Not yet run live.
+  - Next (owner): `ANTHROPIC_API_KEY=… ./mvnw verify -Plive -Dit.test=EvalRunIT -Deval.label=baseline` (~$0.60). Record the scorecard here. Then the first experiment: the 128-token embedding window (Open questions).
+  - Originally planned next (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
 
 - **2026-10-19, M1 live results (runs by the owner on 2026-10-13, both live ITs passed):**
   - `InPromptBaselineIT` (10 pages pasted into a cached prompt): first call 71,427 cache-write tokens, 983 output, **$0.188**; second call reads the cache, **$0.027**.
