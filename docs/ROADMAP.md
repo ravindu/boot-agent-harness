@@ -80,7 +80,9 @@ Newest first. Lets a new session pick up where the last one stopped.
 - **2026-10-20, M2 started (branch `feature/m2-evals`, from `feature/m1-agent-loop`):**
   - `feature/m1-agent-loop` pushed. PR not opened yet: `gh` isn't logged in here, so the owner opens it.
   - Done: golden-set format with 3 example questions (paraphrased how-to, Boot 4 version-specific `@DataJpaTest`, out-of-scope Kafka trap), `GoldenQuestion`/`GoldenSet` loader, `GoldenSetTest` (6 tests, green).
-  - Next (owner): write ~27 more questions in `golden-set.yaml`. Then (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
+  - 2026-10-20: owner added 24 questions. Review against the ingested docs: fixed indentation and one unquoted colon (both broke parsing), 6 non-existent anchors, and key points the Boot 4 docs contradict (`TestRestTemplate` needs `@AutoConfigureTestRestTemplate`, `DataRedisConnectionDetails`, `@JdbcTest` module). 4 questions the docs don't cover (`@TestPropertySource`, `@Nested`, `@Sql` seeding, `@MockBean`) were replaced by owner's choice with doc-backed ones (`RestTestClient`, `OutputCaptureExtension`, embedded DB per context, containers as beans).
+  - Golden set now: **27 questions** (19 answer, 8 decline), every anchor verified to exist. Owner writes the last 3.
+  - Next (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
 
 - **2026-10-19, M1 live results (runs by the owner on 2026-10-13, both live ITs passed):**
   - `InPromptBaselineIT` (10 pages pasted into a cached prompt): first call 71,427 cache-write tokens, 983 output, **$0.188**; second call reads the cache, **$0.027**.

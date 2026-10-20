@@ -115,17 +115,17 @@ questions:
       - It automatically configures MockMvc to capture documentation snippets using Spring REST Docs
       - Each MockMvc call then generates the default snippets automatically
 
-  - id: test-property-source
-    category: configuration
+  - id: rest-test-client-boot4
+    category: version-specific
     expect: answer
-    question: How can I set specific environment properties for a single test class without altering application.properties?
+    question: In a Boot 4 test that starts the real server, what client should I use to call it and assert on the responses?
     expectedSources:
-      - testing.spring-boot-applications.testing-applications
+      - testing.spring-boot-applications.with-running-server
     keyPoints:
-      - Use the properties attribute of @SpringBootTest or the @TestPropertySource annotation
-      - Properties declared this way take precedence over application.properties or application.yml
-      - Useful for overriding specific properties (e.g., disabling scheduled tasks or external integrations)
-
+      - Annotate the test class with @AutoConfigureRestTestClient and autowire a RestTestClient
+      - The client resolves relative links against the running server and has a dedicated API for verifying responses
+      - AssertJ-style assertions are available through RestTestClientResponse
+      - With spring-webflux on the classpath, WebTestClient (@AutoConfigureWebTestClient) is an alternative
   - id: test-web-environment-random-port
     category: configuration
     expect: answer
@@ -195,26 +195,25 @@ questions:
       - Annotate the test class with @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
       - Instructs Spring Boot not to override configured datasource properties with an embedded database
 
-  - id: nested-tests-configuration
-    category: concept
-    expect: answer
-    question: How does Spring Boot handle context caching and configuration inheritance for JUnit 5 @Nested test classes?
-    expectedSources:
-      - testing.spring-boot-applications.testing-applications
-    keyPoints:
-      - Spring Boot supports enclosing class configuration inheritance for @Nested test classes
-      - Use @NestedTestConfiguration(EnclosingConfiguration.INHERIT) to inherit test execution listeners and context setup from parent classes
-
-  - id: sql-script-execution-test
+  - id: capture-console-output
     category: how-to
     expect: answer
-    question: How can I populate sample seed data into my database prior to running a repository test?
+    question: How can I assert on what my code prints to System.out or System.err in a JUnit test?
     expectedSources:
-      - data.sql-databases.initializing-a-database
+      - testing.utilities.output-capture
     keyPoints:
-      - Place schema.sql and data.sql in src/main/resources or src/test/resources for automatic execution
-      - Alternatively, use Spring's @Sql annotation on the test method or class to execute specific SQL scripts before testing
-
+      - Add @ExtendWith(OutputCaptureExtension.class) to the test
+      - Inject CapturedOutput as a constructor or test method parameter and assert on it
+  - id: embedded-database-per-context
+    category: configuration
+    expect: answer
+    question: My test suite seems to share one in-memory database across different application contexts. How do I give each context its own embedded database?
+    expectedSources:
+      - data.sql.datasource.embedded
+    keyPoints:
+      - Set spring.datasource.generate-unique-name to true
+      - By default the same embedded database is reused by the whole test suite, regardless of the number of application contexts
+      - Spring Boot auto-configures embedded H2, HSQL and Derby (deprecated) databases without a connection URL; spring-jdbc is required
   - id: connection-pooling-default
     category: concept
     expect: answer
@@ -229,18 +228,16 @@ questions:
   # VERSION-SPECIFIC & VERSION TRAPS
   # ---------------------------------------------------------------------------
 
-  - id: mockbean-deprecation-boot4
-    category: version-specific
+  - id: testcontainers-as-beans
+    category: how-to
     expect: answer
-    question: Is @MockBean still available in Spring Boot 4, or has it been replaced?
+    question: Can Spring manage my Testcontainers containers as beans instead of static fields in each test class?
     expectedSources:
-      - testing.spring-boot-applications.mocking-beans
+      - testing.testcontainers.spring-beans
     keyPoints:
-      - "@MockBean and @SpyBean are deprecated/removed in favor of Spring Framework 6.2+ core annotations"
-      - Developers should use @MockitoBean and @MockitoSpyBean from org.springframework.test.context.bean.override.mockito
-    mustNotSay:
-      - Recommending org.springframework.boot.test.mock.mockito.MockBean as the standard for new Boot 4 code
-
+      - Declare the container in a @Bean method of a test configuration class
+      - Import that configuration in the test class, then inject and use the container
+      - This is often combined with service connection annotations such as @ServiceConnection
   - id: service-connection-redis-boot4
     category: version-specific
     expect: answer
