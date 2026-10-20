@@ -88,7 +88,9 @@ Newest first. Lets a new session pick up where the last one stopped.
   - Golden set now: **27 questions** (19 answer, 8 decline), every anchor verified to exist. Owner writes the last 3.
   - Owner added 4 more; 3 dropped at the owner's request because the ingested docs don't cover them (RestTemplateBuilder timeouts, cache config, cache testing). Kept `rest-client-test-slice` with Boot 4 key points. **28 questions** (20 answer, 8 decline).
   - 2026-10-21: **runner built** (`AnswerJudge`, `EvalScorer`, `EvalReport`, `EvalRunIT`; `AgentRunResult.retrieved` added). `./mvnw verify` green: 65 tests. Not yet run live.
-  - Next (owner): `ANTHROPIC_API_KEY=… ./mvnw verify -Plive -Dit.test=EvalRunIT -Deval.label=baseline` (~$0.60). Record the scorecard here. Then the first experiment: the 128-token embedding window (Open questions).
+  - **Baseline run (2026-10-20, `evals/reports/2026-10-20T032440Z-baseline.md`):** 21/28 passed (75%); answers 13/20, declines 8/8, retrieval hit 20/20 (section level), key points 48/57, 0 invented citations, $0.557 total, 2.1 turns, 7.3 s avg.
+  - Triage of the 7 failures: **2 retrieval at chunk level** (`testcontainers-service-connection`: right section, but not the chunk with the `@ServiceConnection` example; `rest-test-client-boot4`: example split across chunks), **1 judge false negative** (`data-jpa-test-boot4`: the answer states the missed point), **4 golden-set key points** that go beyond the docs or the question (`spy-existing-bean`, `rest-docs-integration`, `test-rest-template-usage`, `embedded-database-per-context`).
+  - Lesson: the section-level retrieval hit rate is too coarse (100% while two answers lacked the passage they needed). Then the first experiment: the 128-token embedding window (Open questions).
   - Originally planned next (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
 
 - **2026-10-19, M1 live results (runs by the owner on 2026-10-13, both live ITs passed):**
