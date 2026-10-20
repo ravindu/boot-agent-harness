@@ -1,0 +1,59 @@
+# M2 golden set: questions with known answers, used to measure the agent after every change.
+#
+# Scope: only what is ingested (Boot 4.1.1 reference, "Testing" and "Data" pages; see docsagent.docs.pages).
+# Target: ~30 questions. Suggested mix: ~20 answerable (how-to, concept, configuration, version-specific),
+# ~5 out-of-scope, ~3 prompt-injection, ~2 ambiguous/version traps.
+#
+# Fields
+#   id               unique kebab-case name; results are compared across runs by id
+#   category         how-to | concept | configuration | version-specific | out-of-scope | prompt-injection
+#   expect           answer  = the docs cover it, the agent should answer with citations
+#                    decline = the docs don't cover it, the agent should say so instead of answering from memory
+#   question         asked exactly as written; phrase it the way a developer would, not with the docs' words
+#   expectedSources  section anchors (vector_store metadata 'anchor') that contain the answer.
+#                    Retrieval hit = searchDocs returned at least one of them. Empty for expect: decline
+#   keyPoints        facts a correct answer must contain, one per item; the LLM judge checks each
+#                    (for expect: decline, describe the expected behaviour instead)
+#   mustNotSay       optional; statements that make the answer wrong, e.g. a Boot 3 package or an old property name
+#
+# Find anchors: docker-compose exec postgres psql -U docsagent -d docsagent \
+#   -c "select distinct metadata->>'anchor' from vector_store order by 1;"
+
+questions:
+
+  - id: testcontainers-service-connection
+    category: how-to
+    expect: answer
+    # Paraphrased on purpose: no "Testcontainers" or "@ServiceConnection" in the question
+    question: How do I point my integration tests at a database running in a Docker container without hard-coding its URL?
+    expectedSources:
+      - testing.testcontainers.service-connections
+    keyPoints:
+      - Annotate the container field (a static @Container field in a @Testcontainers test) with @ServiceConnection
+      - Spring Boot then creates a ConnectionDetails bean for the container, which takes precedence over connection properties such as spring.datasource.url
+      - The spring-boot-testcontainers module must be a test dependency
+
+  - id: data-jpa-test-boot4
+    category: version-specific
+    expect: answer
+    question: What does @DataJpaTest set up in Boot 4, and which module do I need for it?
+    expectedSources:
+      - testing.spring-boot-applications.autoconfigured-spring-data-jpa
+    keyPoints:
+      - "@DataJpaTest comes from the spring-boot-data-jpa-test module"
+      - It scans @Entity classes, configures Spring Data JPA repositories, and an embedded database if one is on the classpath
+      - Regular @Component and @ConfigurationProperties beans are not scanned
+      - Tests are transactional and roll back at the end of each test by default
+    mustNotSay:
+      - The Boot 3 package org.springframework.boot.test.autoconfigure.orm.jpa (Boot 4 uses org.springframework.boot.data.jpa.test.autoconfigure)
+
+  - id: kafka-listener-out-of-scope
+    category: out-of-scope
+    expect: decline
+    # Trap: Kafka appears in the Testcontainers service-connection tables, so retrieval returns
+    # Kafka-flavoured chunks that don't answer the question
+    question: How do I configure the concurrency of a Kafka listener in Spring Boot?
+    expectedSources: []
+    keyPoints:
+      - Says the available documentation does not cover Kafka listener configuration
+      - Does not present an answer from memory as if it came from the docs, and cites no source for it
