@@ -13,7 +13,7 @@ Why this use case: the owner is a Spring Boot expert (can spot hallucinations an
 | # | Milestone | Concepts | Status |
 |---|---|---|---|
 | M0 | Project setup: `pom.xml`, compose, Testcontainers, config properties, Anthropic SDK smoke call | Project skeleton | done |
-| M1 | Hand-written agent loop with one tool (`searchDocs`) over one version of the Boot reference docs; ingestion (read → chunk → embed → store); answers with citations; every step traced to a table | Agent loop, tool use, ingestion, chunking, embeddings, grounding | **code done; live runs pending** (see Progress log) |
+| M1 | Hand-written agent loop with one tool (`searchDocs`) over one version of the Boot reference docs; ingestion (read → chunk → embed → store); answers with citations; every step traced to a table | Agent loop, tool use, ingestion, chunking, embeddings, grounding | done |
 | M2 | Eval harness: ~30 golden questions with expected answers and sources, a runner, retrieval hit rate, LLM-as-judge score, cost per run | Evaluation, regression testing | todo |
 | M3 | Context management (trim tool results, summarize long chats), budgets, retries/rate limits, prompt caching, conversation memory; **`askUser` tool (first human-in-the-loop)** | Context engineering, limits, caching, HITL pause/resume | todo |
 | M4 | Retrieval quality: multiple Boot versions with version metadata and filtering, structure-aware chunking (keep code blocks whole), hybrid search (pgvector + Postgres full-text), reranking; more tools (`searchIssues`, `getReleaseNotes`, `compareVersions`); structured output | Metadata filtering, hybrid search, reranking, structured output | todo |
@@ -68,13 +68,21 @@ GET  /api/agent/runs/{runId}/events       → SSE stream of steps
 | Citations (M1) | Tool results label chunks `S1…Sn`; the model cites `[Sn]`; the harness maps markers to doc URLs and flags unknown markers as invented citations | Grounding becomes measurable (M2 metric) |
 | Chunking (M1) | Split at `[[anchor]]` headings, ~200 words per chunk with a breadcrumb prefix, `include-code` examples inlined | all-MiniLM-L6-v2 embeds only the first ~256 tokens |
 | Run statuses (M1) | `COMPLETED`, `MAX_TURNS_REACHED`, `BUDGET_EXCEEDED`, `TIMED_OUT`, `TRUNCATED`, `REFUSED`, `FAILED`; limits checked before every model call | A run never ends silently |
-| Agent request (M1) | `claude-sonnet-5-5`, effort `medium`, `max_tokens` 16000, tools `strict: true`, system prompt in `prompts/agent-system.txt` | M2 measures whether `high` effort pays off |
+| Agent request (M1) | `claude-sonnet-5-5`, effort `medium`, `max_tokens` 10000 (owner changed it from 16000 on 2026-10-19), tools `strict: true`, system prompt in `prompts/agent-system.txt` | M2 measures whether `high` effort pays off |
 | Pricing (M1) | USD per MTok in `docsagent.pricing.models` (checked 2026-10-12); startup fails if a configured model has no price | Cost per run without hard-coded prices |
 | No new starters (M1) | `RestClient.builder()` instead of `spring-boot-starter-restclient`; MockMvc built from the context instead of `spring-boot-starter-webmvc-test` | Boot 4 split these into modules; plain spring-web/spring-test are enough |
 
 ## Progress log
 
 Newest first. Lets a new session pick up where the last one stopped.
+
+- **2026-10-19, M1 live results (runs by the owner on 2026-10-13, both live ITs passed):**
+  - `InPromptBaselineIT` (10 pages pasted into a cached prompt): first call 71,427 cache-write tokens, 983 output, **$0.188**; second call reads the cache, **$0.027**.
+  - `AgentLiveIT` (RAG through `searchDocs`): `COMPLETED`, 2 turns, 6,006 tokens, **$0.018**, 2 citations, 0 invented.
+  - So for one question, RAG used ~12× fewer tokens than the baseline and cost less than even a cache-hit baseline call. Answer quality is compared in M2.
+  - 3 manual runs against compose Postgres: all `COMPLETED`, 0 invented citations, $0.013–0.019 each.
+  - Commit `5043712` ("Implement the phase M2") holds the docs, diagrams and CLAUDE.md, not M2 code. It also changed `agent-max-tokens` 16000 → 10000 (now recorded in Decisions) and the sample question in `http/agent.http`.
+  - `./mvnw verify` green on 2026-10-19. **M1 done.** Next: push `feature/m1-agent-loop`, open the PR, start M2 on `feature/m2-evals`.
 
 - **2026-10-13:** M1 architecture diagram added at `docs/diagrams/architecture-m1.html` (diagram-design skill). Redraw it when a milestone changes the topology.
   - Ingestion explained in `docs/ingestion.md` (+ `docs/diagrams/ingestion-pipeline.html`). Real ingestion against compose Postgres: 161 chunks.
