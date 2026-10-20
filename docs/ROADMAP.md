@@ -96,7 +96,11 @@ Newest first. Lets a new session pick up where the last one stopped.
     2. Judge: every "present" verdict must quote the answer (checked in code), a failing round 1 gets an independent round 2, an item passes only if both rounds pass it, disagreements are reported as uncertain.
     3. `expectedText` on all 20 answer questions (each phrase verified to occur in exactly one chunk) → new **passage hit rate**; the report also stores Claude's `searchDocs` queries and the retrieved chunk ids per question.
     - `./mvnw verify` green: 73 tests.
-  - Next (owner): re-run the baseline, `-Deval.label=baseline-v2` (~$0.56). Expected: ~25–26/28, passage hit below 100%, the 2 retrieval failures still failing. This becomes the reference for the 128-token experiment. Then the first experiment: the 128-token embedding window (Open questions).
+  - **baseline-v2 (2026-10-20, `evals/reports/2026-10-20T065749Z-baseline-v2.md`, run without the label flag, renamed afterwards):** 27/28 (96%); passage hit 20/20; 1 re-judged, 0 uncertain; $0.584, 2.2 turns, 9.0 s.
+    - 5 flips explained by the eval fixes (4 key points + `data-jpa-test-boot4` now passing on quoted evidence).
+    - 3 flips with **no change to the agent**: `testcontainers-service-connection` and `rest-test-client-boot4` FAIL→PASS (Claude searched differently, e.g. "Testcontainers @ServiceConnection database container integration tests", and chunk 0 made it into the results), `service-connection-redis-boot4` PASS→FAIL. That is run-to-run noise: Claude's search queries vary, and chunk 0 vs the table chunk is a near-tie (0.365 vs 0.347 for one query).
+    - Lesson: one agent run per question can't show a retrieval improvement. Retrieval needs its own deterministic measurement (fixed queries, no Claude), and agent scores need repeated runs.
+    - `service-connection-redis-boot4`: key point asks for a "static RedisContainer field"; the docs only show the Redis case as a `GenericContainer` `@Bean` (the agent said so). Open: loosen the key point (owner to decide). Then the first experiment: the 128-token embedding window (Open questions).
   - Originally planned next (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
 
 - **2026-10-19, M1 live results (runs by the owner on 2026-10-13, both live ITs passed):**
