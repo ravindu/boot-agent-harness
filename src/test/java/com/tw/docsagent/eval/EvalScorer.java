@@ -99,7 +99,8 @@ public final class EvalScorer {
             note = "invented citations " + run.inventedCitations();
         }
 
-        return new QuestionResult(question.id(), question.category(), question.expect(), passed, run.status(),
+        return new QuestionResult(question.id(), question.category(), question.expect(), question.traits(), passed,
+                run.status(),
                 retrievalHit, passageHit, citedExpected, met, question.keyPoints().size(), List.copyOf(missed),
                 List.copyOf(violations), List.copyOf(uncertain), judgement == null ? 0 : judgement.rounds(),
                 run.inventedCitations(), retrieved, cited, retrieval.searchQueries(), chunkIds, run.turns(), latencyMs,

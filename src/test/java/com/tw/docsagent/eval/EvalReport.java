@@ -2,6 +2,7 @@ package com.tw.docsagent.eval;
 
 import com.tw.docsagent.eval.GoldenQuestion.Category;
 import com.tw.docsagent.eval.GoldenQuestion.Expect;
+import com.tw.docsagent.eval.GoldenQuestion.Trait;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
@@ -77,10 +78,20 @@ public record EvalReport(String label, String startedAt, Map<String, String> con
             }
         });
 
+        // A question counts once for every trait it has, so the rows don't add up to the total
+        md.append("\n## By trait\n\n| Trait | Passed | Key points (answer questions) |\n|---|---|---|\n");
+        Arrays.stream(Trait.values()).forEach(trait ->
+                traitRow(md, kebab(trait.name()), results.stream().filter(r -> r.traits().contains(trait)).toList()));
+        traitRow(md, "(none)", results.stream().filter(r -> r.traits().isEmpty()).toList());
+
         List<QuestionResult> failed = results.stream().filter(r -> !r.passed()).toList();
         md.append("\n## Failures (").append(failed.size()).append(")\n");
         for (QuestionResult r : failed) {
-            md.append("\n### ").append(r.id()).append(" (").append(kebab(r.category().name())).append(")\n\n");
+            md.append("\n### ").append(r.id()).append(" (").append(kebab(r.category().name()));
+            if (!r.traits().isEmpty()) {
+                md.append("; ").append(String.join(", ", r.traits().stream().map(t -> kebab(t.name())).toList()));
+            }
+            md.append(")\n\n");
             if (r.note() != null) {
                 md.append("- ").append(r.note()).append('\n');
             }
@@ -128,6 +139,18 @@ public record EvalReport(String label, String startedAt, Map<String, String> con
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private static void traitRow(StringBuilder md, String trait, List<QuestionResult> withTrait) {
+        if (withTrait.isEmpty()) {
+            return;
+        }
+        List<QuestionResult> answers = withTrait.stream().filter(r -> r.expect() == Expect.ANSWER).toList();
+        md.append("| ").append(trait)
+                .append(" | ").append(ratio(withTrait, QuestionResult::passed))
+                .append(" | ").append(fraction(answers.stream().mapToInt(QuestionResult::keyPointsMet).sum(),
+                        answers.stream().mapToInt(QuestionResult::keyPointsTotal).sum()))
+                .append(" |\n");
     }
 
     private static void row(StringBuilder md, String metric, String value) {

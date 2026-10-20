@@ -94,6 +94,7 @@ class EvalRunIT {
         GoldenSetChecks.assertExpectedSectionsWereIngested(questions, jdbc);
         Map<String, String> chunkTextById = GoldenSetChecks.chunkTexts(jdbc);
         GoldenSetChecks.assertEachExpectedTextIsInExactlyOneChunk(questions, chunkTextById);
+        GoldenSetChecks.assertDerivedTraitsMatchTheDocs(questions, GoldenSetChecks.chunksWithIndex(jdbc));
 
         AnswerJudge judge = new AnswerJudge(llmGateway, anthropic.helperModel(), costCalculator);
         List<QuestionResult> results = new ArrayList<>();

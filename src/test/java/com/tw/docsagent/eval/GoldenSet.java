@@ -2,6 +2,7 @@ package com.tw.docsagent.eval;
 
 import com.tw.docsagent.eval.GoldenQuestion.Category;
 import com.tw.docsagent.eval.GoldenQuestion.Expect;
+import com.tw.docsagent.eval.GoldenQuestion.Trait;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -76,6 +77,7 @@ public final class GoldenSet {
         }
         Category category = enumValue(Category.class, requiredText(fields, "category", id), id);
         Expect expect = enumValue(Expect.class, requiredText(fields, "expect", id), id);
+        List<Trait> traits = traits(fields, id);
         String question = requiredText(fields, "question", id);
         List<String> sources = textList(fields, "expectedSources", id);
         List<String> expectedText = textList(fields, "expectedText", id);
@@ -91,7 +93,40 @@ public final class GoldenSet {
         if (expect == Expect.DECLINE && (!sources.isEmpty() || !expectedText.isEmpty())) {
             throw new IllegalArgumentException(id + ": expect 'decline' must have no expectedSources or expectedText");
         }
-        return new GoldenQuestion(id, category, expect, question, sources, expectedText, keyPoints, mustNotSay);
+        checkTraitRules(id, expect, traits, expectedText, mustNotSay);
+        return new GoldenQuestion(id, category, expect, traits, question, sources, expectedText, keyPoints, mustNotSay);
+    }
+
+    /** Required, so every question gets a conscious decision; an empty list is fine. */
+    private static List<Trait> traits(Map<?, ?> fields, String id) {
+        if (!fields.containsKey("traits")) {
+            throw new IllegalArgumentException(id + ": 'traits' is required (use [] for none)");
+        }
+        List<Trait> traits = textList(fields, "traits", id).stream().map(t -> enumValue(Trait.class, t, id)).toList();
+        if (traits.size() != Set.copyOf(traits).size()) {
+            throw new IllegalArgumentException(id + ": duplicate traits " + traits);
+        }
+        return traits;
+    }
+
+    /**
+     * Rules that keep hand-tagged traits honest. The derived traits (paraphrased, deep-detail,
+     * table-or-code) need the ingested chunks, so {@link GoldenSetChecks} checks those before a run.
+     */
+    private static void checkTraitRules(String id, Expect expect, List<Trait> traits, List<String> expectedText,
+                                        List<String> mustNotSay) {
+        if (traits.contains(Trait.MULTI_HOP) != (expectedText.size() >= 2)) {
+            throw new IllegalArgumentException(id + ": 'multi-hop' must be set exactly when there are two or more expectedText phrases");
+        }
+        if (traits.contains(Trait.BOOT3_HABIT) && mustNotSay.isEmpty()) {
+            throw new IllegalArgumentException(id + ": 'boot3-habit' needs a mustNotSay item naming the Boot 3 answer");
+        }
+        if (traits.contains(Trait.DOCS_GAP) && (expect != Expect.DECLINE || mustNotSay.isEmpty())) {
+            throw new IllegalArgumentException(id + ": 'docs-gap' is for decline questions with a mustNotSay item for the answer from memory");
+        }
+        if (traits.contains(Trait.PARTIAL_COVERAGE) && expect != Expect.ANSWER) {
+            throw new IllegalArgumentException(id + ": 'partial-coverage' is for answer questions");
+        }
     }
 
     private static String requiredText(Map<?, ?> fields, String key, String id) {

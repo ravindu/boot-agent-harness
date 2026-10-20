@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.tw.docsagent.agent.RunStatus;
 import com.tw.docsagent.eval.GoldenQuestion.Category;
 import com.tw.docsagent.eval.GoldenQuestion.Expect;
+import com.tw.docsagent.eval.GoldenQuestion.Trait;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -20,11 +21,13 @@ class EvalReportTest {
     private final EvalReport report = new EvalReport("baseline", "2026-10-21T08:15:00Z",
             Map.of("agent", "claude-sonnet-5-5 (effort medium)"),
             List.of(
-                    result("pass-hit", Expect.ANSWER, true, true, true, 3, 3, List.of(), null),
+                    result("pass-hit", Expect.ANSWER, List.of(), true, true, true, 3, 3, List.of(), null),
                     // the baseline's typical failure: right section, wrong chunk
-                    result("fail-miss", Expect.ANSWER, false, true, false, 1, 3, List.of("key point: key point"), null),
-                    result("kafka", Expect.DECLINE, true, null, null, 2, 2, List.of(), null),
-                    result("injection", Expect.DECLINE, false, null, null, 0, 2, List.of(), "judge failed: boom")));
+                    result("fail-miss", Expect.ANSWER, List.of(Trait.MULTI_HOP, Trait.PARAPHRASED), false, true,
+                            false, 1, 3, List.of("key point: key point"), null),
+                    result("kafka", Expect.DECLINE, List.of(Trait.DISTRACTOR), true, null, null, 2, 2, List.of(), null),
+                    result("injection", Expect.DECLINE, List.of(Trait.PARAPHRASED), false, null, null, 0, 2, List.of(),
+                            "judge failed: boom")));
 
     @Test
     void scorecardSeparatesAnswerAndDeclineQuestions() {
@@ -48,12 +51,25 @@ class EvalReportTest {
 
         assertThat(md)
                 .contains("## Failures (2)")
-                .contains("### fail-miss (how-to)")
+                .contains("### fail-miss (how-to; multi-hop, paraphrased)")
                 .contains("- retrieval: section hit, passage **miss**, retrieved [expected.anchor]")
                 .contains("- searches: [service connection]")
                 .contains("- ⚠️ uncertain: key point: key point")
                 .contains("- missing: key point (judge: not stated)")
-                .contains("### injection (how-to)\n\n- judge failed: boom");
+                .contains("### injection (how-to; paraphrased)\n\n- judge failed: boom");
+    }
+
+    @Test
+    void byTraitCountsAQuestionUnderEachOfItsTraitsAndKeyPointsOnlyForAnswerQuestions() {
+        String md = report.toMarkdown();
+
+        assertThat(md)
+                .contains("| Trait | Passed | Key points (answer questions) |")
+                .contains("| paraphrased | 0/2 (0%) | 1/3 (33%) |")
+                .contains("| multi-hop | 0/1 (0%) | 1/3 (33%) |")
+                .contains("| distractor | 1/1 (100%) | n/a |")
+                .contains("| (none) | 1/1 (100%) | 3/3 (100%) |")
+                .doesNotContain("| boot3-habit |");
     }
 
     @Test
@@ -71,9 +87,10 @@ class EvalReportTest {
         assertThat(EvalReport.fraction(0, 0)).isEqualTo("n/a");
     }
 
-    private static QuestionResult result(String id, Expect expect, boolean passed, Boolean sectionHit,
-                                         Boolean passageHit, int met, int total, List<String> uncertain, String note) {
-        return new QuestionResult(id, Category.HOW_TO, expect, passed, RunStatus.COMPLETED, sectionHit, passageHit,
+    private static QuestionResult result(String id, Expect expect, List<Trait> traits, boolean passed,
+                                         Boolean sectionHit, Boolean passageHit, int met, int total,
+                                         List<String> uncertain, String note) {
+        return new QuestionResult(id, Category.HOW_TO, expect, traits, passed, RunStatus.COMPLETED, sectionHit, passageHit,
                 sectionHit, met, total, passed ? List.of() : List.of("key point (judge: not stated)"), List.of(),
                 uncertain, uncertain.isEmpty() ? 1 : 2, List.of(), List.of("expected.anchor"), List.of(),
                 List.of("service connection"), List.of("chunk-1"), 2, 1500, new BigDecimal("0.020"),

@@ -41,7 +41,7 @@ class AnswerJudgeTest {
     private final LlmGateway llm = mock(LlmGateway.class);
     private final AnswerJudge judge = new AnswerJudge(llm, JUDGE_MODEL, costCalculator());
 
-    private final GoldenQuestion question = new GoldenQuestion("data-jpa-test", Category.HOW_TO, Expect.ANSWER,
+    private final GoldenQuestion question = new GoldenQuestion("data-jpa-test", Category.HOW_TO, Expect.ANSWER, List.of(),
             "What does @DataJpaTest set up?", List.of("testing.x"), List.of(),
             List.of("Comes from spring-boot-data-jpa-test", "Rolls back after each test"),
             List.of("The Boot 3 package"));

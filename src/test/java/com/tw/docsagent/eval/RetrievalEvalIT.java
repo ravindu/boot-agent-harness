@@ -88,6 +88,7 @@ class RetrievalEvalIT {
 
         ingestionService.ingestAll();
         GoldenSetChecks.assertEachExpectedTextIsInExactlyOneChunk(questions, GoldenSetChecks.chunkTexts(jdbc));
+        GoldenSetChecks.assertDerivedTraitsMatchTheDocs(questions, GoldenSetChecks.chunksWithIndex(jdbc));
 
         Optional<Path> queriesFrom = Optional.ofNullable(System.getProperty("eval.queriesFrom")).map(Path::of)
                 .or(RetrievalEvalIT::newestAgentReport);

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.tw.docsagent.eval.GoldenQuestion.Category;
 import com.tw.docsagent.eval.GoldenQuestion.Expect;
+import com.tw.docsagent.eval.GoldenQuestion.Trait;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ class GoldenSetTest {
               - id: service-connection
                 category: how-to
                 expect: answer
+                traits: [table-or-code]
                 question: How do I connect tests to a container?
                 expectedSources: [testing.testcontainers.service-connections]
                 expectedText: ['@ServiceConnection static Neo4jContainer']
@@ -37,6 +39,7 @@ class GoldenSetTest {
         assertThat(q.id()).isEqualTo("service-connection");
         assertThat(q.category()).isEqualTo(Category.HOW_TO);
         assertThat(q.expect()).isEqualTo(Expect.ANSWER);
+        assertThat(q.traits()).containsExactly(Trait.TABLE_OR_CODE);
         assertThat(q.expectedSources()).containsExactly("testing.testcontainers.service-connections");
         assertThat(q.expectedText()).containsExactly("@ServiceConnection static Neo4jContainer");
         assertThat(q.keyPoints()).containsExactly("Use @ServiceConnection");
@@ -76,5 +79,38 @@ class GoldenSetTest {
                 .hasMessage("id must be kebab-case: Service Connection");
         assertThatThrownBy(() -> GoldenSet.parse("questions: []"))
                 .hasMessage("Golden set needs a non-empty 'questions' list");
+    }
+
+    @Test
+    void traitsAreRequiredButMayBeEmpty() {
+        assertThat(GoldenSet.parse(VALID.replace("traits: [table-or-code]", "traits: []")).getFirst().traits()).isEmpty();
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("    traits: [table-or-code]\n", "")))
+                .hasMessage("service-connection: 'traits' is required (use [] for none)");
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("[table-or-code]", "[tricky]")))
+                .hasMessage("service-connection: unknown trait 'tricky'");
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("[table-or-code]", "[paraphrased, paraphrased]")))
+                .hasMessage("service-connection: duplicate traits [PARAPHRASED, PARAPHRASED]");
+    }
+
+    @Test
+    void multiHopMeansTwoOrMoreExpectedTextPhrases() {
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("[table-or-code]", "[multi-hop]")))
+                .hasMessageContaining("'multi-hop' must be set exactly when there are two or more expectedText phrases");
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace(
+                "['@ServiceConnection static Neo4jContainer']", "['@ServiceConnection', 'Neo4jContainer']")))
+                .hasMessageContaining("'multi-hop' must be set exactly when there are two or more expectedText phrases");
+    }
+
+    @Test
+    void handTaggedTraitsNeedTheFieldsThatMakeThemCheckable() {
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("[table-or-code]", "[boot3-habit]")))
+                .hasMessage("service-connection: 'boot3-habit' needs a mustNotSay item naming the Boot 3 answer");
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("[table-or-code]", "[docs-gap]")))
+                .hasMessageContaining("'docs-gap' is for decline questions");
+        assertThatThrownBy(() -> GoldenSet.parse(VALID.replace("[table-or-code]", "[partial-coverage]")
+                .replace("expect: answer", "expect: decline")
+                .replace("    expectedSources: [testing.testcontainers.service-connections]\n", "")
+                .replace("    expectedText: ['@ServiceConnection static Neo4jContainer']\n", "")))
+                .hasMessage("service-connection: 'partial-coverage' is for answer questions");
     }
 }

@@ -29,11 +29,11 @@ class EvalScorerTest {
             "chunk-1", "| `JdbcConnectionDetails` | Containers of type `JdbcDatabaseContainer`",
             "chunk-9", "The JUnit extension"));
 
-    private final GoldenQuestion answerQuestion = new GoldenQuestion("q", Category.HOW_TO, Expect.ANSWER, "How?",
-            List.of("testing.testcontainers.service-connections"), List.of("@ServiceConnection static Neo4jContainer"),
+    private final GoldenQuestion answerQuestion = new GoldenQuestion("q", Category.HOW_TO, Expect.ANSWER, List.of(),
+            "How?", List.of("testing.testcontainers.service-connections"), List.of("@ServiceConnection static Neo4jContainer"),
             List.of("point one", "point two"), List.of("forbidden"));
     private final GoldenQuestion declineQuestion = new GoldenQuestion("kafka", Category.OUT_OF_SCOPE, Expect.DECLINE,
-            "Kafka?", List.of(), List.of(), List.of("says the docs don't cover it"), List.of());
+            List.of(), "Kafka?", List.of(), List.of(), List.of("says the docs don't cover it"), List.of());
 
     @Test
     void completeCitedAnswerWithAllKeyPointsPasses() {
