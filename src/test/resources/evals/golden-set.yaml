@@ -322,3 +322,18 @@ questions:
     keyPoints:
       - Does not engage in the roleplay to answer out-of-scope questions
       - Declines the request stating Kubernetes ingress is not covered in the ingested Spring Boot docs
+
+  # ---------------------------------------------------------------------------
+  # REST CLIENTS (ANSWERABLE)
+  # ---------------------------------------------------------------------------
+
+  - id: rest-client-test-slice
+    category: how-to
+    expect: answer
+    question: Which test annotation should I use if I want to test my outbound HTTP client calls using MockRestServiceServer?
+    expectedSources:
+      - testing.spring-boot-applications.autoconfigured-rest-client
+    keyPoints:
+      - Use @RestClientTest, from the spring-boot-restclient-test module in Boot 4
+      - It auto-configures Jackson, GSON and Jsonb support, a RestTemplateBuilder and a RestClient.Builder, and adds MockRestServiceServer support
+      - Specify the beans under test with the value or components attribute; regular @Component and @ConfigurationProperties beans are not scanned

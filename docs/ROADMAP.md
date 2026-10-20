@@ -82,6 +82,7 @@ Newest first. Lets a new session pick up where the last one stopped.
   - Done: golden-set format with 3 example questions (paraphrased how-to, Boot 4 version-specific `@DataJpaTest`, out-of-scope Kafka trap), `GoldenQuestion`/`GoldenSet` loader, `GoldenSetTest` (6 tests, green).
   - 2026-10-20: owner added 24 questions. Review against the ingested docs: fixed indentation and one unquoted colon (both broke parsing), 6 non-existent anchors, and key points the Boot 4 docs contradict (`TestRestTemplate` needs `@AutoConfigureTestRestTemplate`, `DataRedisConnectionDetails`, `@JdbcTest` module). 4 questions the docs don't cover (`@TestPropertySource`, `@Nested`, `@Sql` seeding, `@MockBean`) were replaced by owner's choice with doc-backed ones (`RestTestClient`, `OutputCaptureExtension`, embedded DB per context, containers as beans).
   - Golden set now: **27 questions** (19 answer, 8 decline), every anchor verified to exist. Owner writes the last 3.
+  - Owner added 4 more; 3 dropped at the owner's request because the ingested docs don't cover them (RestTemplateBuilder timeouts, cache config, cache testing). Kept `rest-client-test-slice` with Boot 4 key points. **28 questions** (20 answer, 8 decline).
   - Next (Claude): the runner (live IT: one agent run per question, retrieval hit rate from the `TOOL_CALL` steps, citation checks), the Haiku judge, and a results report.
 
 - **2026-10-19, M1 live results (runs by the owner on 2026-10-13, both live ITs passed):**
