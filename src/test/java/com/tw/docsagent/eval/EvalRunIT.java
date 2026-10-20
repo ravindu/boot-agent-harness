@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -92,9 +91,9 @@ class EvalRunIT {
         Instant startedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 
         ingestionService.ingestAll();
-        assertExpectedSectionsWereIngested(questions);
-        Map<String, String> chunkTextById = chunkTexts();
-        assertEachExpectedTextIsInExactlyOneChunk(questions, chunkTextById);
+        GoldenSetChecks.assertExpectedSectionsWereIngested(questions, jdbc);
+        Map<String, String> chunkTextById = GoldenSetChecks.chunkTexts(jdbc);
+        GoldenSetChecks.assertEachExpectedTextIsInExactlyOneChunk(questions, chunkTextById);
 
         AnswerJudge judge = new AnswerJudge(llmGateway, anthropic.helperModel(), costCalculator);
         List<QuestionResult> results = new ArrayList<>();
@@ -127,39 +126,6 @@ class EvalRunIT {
 
         assertThat(results).as("every agent run failed; check the API key, model or network")
                 .anyMatch(r -> r.status() != RunStatus.FAILED);
-    }
-
-    /** A typo'd anchor would silently count as a retrieval miss on every run; fail before spending money. */
-    private void assertExpectedSectionsWereIngested(List<GoldenQuestion> questions) {
-        Set<String> ingested = Set.copyOf(jdbc.sql("SELECT DISTINCT metadata->>'anchor' FROM vector_store")
-                .query(String.class).list());
-        List<String> unknown = questions.stream()
-                .flatMap(q -> q.expectedSources().stream().filter(a -> !ingested.contains(a)).map(a -> q.id() + ": " + a))
-                .toList();
-        assertThat(unknown).as("expectedSources anchors that are not in the ingested docs").isEmpty();
-    }
-
-    private Map<String, String> chunkTexts() {
-        Map<String, String> texts = new LinkedHashMap<>();
-        jdbc.sql("SELECT id::text AS id, content FROM vector_store")
-                .query((rs, row) -> Map.entry(rs.getString("id"), rs.getString("content")))
-                .list()
-                .forEach(e -> texts.put(e.getKey(), e.getValue()));
-        return texts;
-    }
-
-    /** A phrase matching no chunk can never hit; one matching several can't tell which chunk was found. */
-    private static void assertEachExpectedTextIsInExactlyOneChunk(List<GoldenQuestion> questions, Map<String, String> chunks) {
-        List<String> normalized = chunks.values().stream().map(EvalScorer::normalize).toList();
-        List<String> problems = questions.stream()
-                .flatMap(q -> q.expectedText().stream().map(phrase -> {
-                    String p = EvalScorer.normalize(phrase);
-                    long matches = normalized.stream().filter(text -> text.contains(p)).count();
-                    return matches == 1 ? null : q.id() + ": '" + phrase + "' matches " + matches + " chunks";
-                }))
-                .filter(Objects::nonNull)
-                .toList();
-        assertThat(problems).as("expectedText phrases must each occur in exactly one ingested chunk").isEmpty();
     }
 
     /** From the run's trace: what Claude actually searched for. */
