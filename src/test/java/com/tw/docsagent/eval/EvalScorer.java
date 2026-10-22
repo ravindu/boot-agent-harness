@@ -53,6 +53,36 @@ public final class EvalScorer {
         Boolean passageHit = question.expectedText().isEmpty() ? null
                 : passageHit(question.expectedText(), chunkIds, retrieval.chunkTextById());
 
+        // Notes about the run itself; judged() adds the judge's part
+        String runNote = null;
+        if (!answerQuestion && run.status() == RunStatus.REFUSED) {
+            runNote = "refused (" + run.statusDetail() + "), counted as a decline";
+        } else if (run.status() != RunStatus.COMPLETED) {
+            runNote = "run ended " + run.status() + (run.statusDetail() == null ? "" : " (" + run.statusDetail() + ")");
+        }
+
+        QuestionResult unjudged = new QuestionResult(question.id(), question.category(), question.expect(),
+                question.traits(), false, run.status(), retrievalHit, passageHit, citedExpected, 0,
+                question.keyPoints().size(), List.of(), List.of(), List.of(), 0, run.inventedCitations(), retrieved,
+                cited, retrieval.searchQueries(), chunkIds, run.turns(), latencyMs, run.costUsd(), BigDecimal.ZERO,
+                run.runId(), runNote, run.answer());
+        return judged(unjudged, question, judgement, judgeError);
+    }
+
+    /**
+     * Applies the judge's decisions to a result: the checklist fields, the pass rules and the note.
+     * {@link #score} uses it for a fresh run; {@code RejudgeIT} uses it on a result read back from a
+     * report, so a stored answer can be judged again without running the agent. Retrieval fields are
+     * kept as they are.
+     *
+     * @param scored     a result whose note, if any, is about the run itself (set by {@link #score});
+     *                   for a COMPLETED run the note is recomputed here
+     * @param judgement  null when the judge didn't run (no completed answer) or failed
+     * @param judgeError why the judge failed, or null
+     */
+    public static QuestionResult judged(QuestionResult scored, GoldenQuestion question, Judgement judgement,
+                                        String judgeError) {
+        boolean answerQuestion = question.expect() == Expect.ANSWER;
         List<String> missed = new ArrayList<>();
         List<String> violations = new ArrayList<>();
         List<String> uncertain = new ArrayList<>();
@@ -80,32 +110,29 @@ public final class EvalScorer {
             }
         }
 
-        boolean checklistPassed = run.status() == RunStatus.COMPLETED
+        boolean completed = scored.status() == RunStatus.COMPLETED;
+        boolean checklistPassed = completed
                 && judgement != null
                 && met == question.keyPoints().size()
                 && violations.isEmpty()
-                && run.inventedCitations().isEmpty();
-        boolean refusedDecline = !answerQuestion && run.status() == RunStatus.REFUSED;
+                && scored.inventedCitations().isEmpty();
+        boolean refusedDecline = !answerQuestion && scored.status() == RunStatus.REFUSED;
         boolean passed = checklistPassed || refusedDecline;
 
-        String note = null;
-        if (refusedDecline) {
-            note = "refused (" + run.statusDetail() + "), counted as a decline";
-        } else if (run.status() != RunStatus.COMPLETED) {
-            note = "run ended " + run.status() + (run.statusDetail() == null ? "" : " (" + run.statusDetail() + ")");
-        } else if (judgeError != null) {
-            note = "judge failed: " + judgeError;
-        } else if (!run.inventedCitations().isEmpty()) {
-            note = "invented citations " + run.inventedCitations();
+        String note = scored.note();
+        if (completed) {
+            note = judgeError != null ? "judge failed: " + judgeError
+                    : !scored.inventedCitations().isEmpty() ? "invented citations " + scored.inventedCitations()
+                    : null;
         }
 
         return new QuestionResult(question.id(), question.category(), question.expect(), question.traits(), passed,
-                run.status(),
-                retrievalHit, passageHit, citedExpected, met, question.keyPoints().size(), List.copyOf(missed),
-                List.copyOf(violations), List.copyOf(uncertain), judgement == null ? 0 : judgement.rounds(),
-                run.inventedCitations(), retrieved, cited, retrieval.searchQueries(), chunkIds, run.turns(), latencyMs,
-                run.costUsd(), judgement == null ? BigDecimal.ZERO : judgement.costUsd(), run.runId(), note,
-                run.answer());
+                scored.status(), scored.retrievalHit(), scored.passageHit(), scored.citedExpected(), met,
+                question.keyPoints().size(), List.copyOf(missed), List.copyOf(violations), List.copyOf(uncertain),
+                judgement == null ? 0 : judgement.rounds(), scored.inventedCitations(), scored.retrievedAnchors(),
+                scored.citedAnchors(), scored.searchQueries(), scored.retrievedChunkIds(), scored.turns(),
+                scored.latencyMs(), scored.agentCostUsd(), judgement == null ? BigDecimal.ZERO : judgement.costUsd(),
+                scored.runId(), note, scored.answer());
     }
 
     /** Every phrase must occur in at least one retrieved chunk. */

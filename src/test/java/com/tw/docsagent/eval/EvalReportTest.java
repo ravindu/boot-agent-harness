@@ -83,6 +83,15 @@ class EvalReportTest {
     }
 
     @Test
+    void aWrittenReportReadsBackUnchangedSoItCanBeJudgedAgain(@TempDir Path dir) {
+        report.write(dir);
+
+        EvalReport read = EvalReport.read(dir.resolve("2026-10-21T081500Z-baseline.json"));
+
+        assertThat(read).usingRecursiveComparison().isEqualTo(report);
+    }
+
+    @Test
     void fractionHandlesAnEmptyGroup() {
         assertThat(EvalReport.fraction(0, 0)).isEqualTo("n/a");
     }

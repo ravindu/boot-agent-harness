@@ -141,6 +141,11 @@ public record EvalReport(String label, String startedAt, Map<String, String> con
         }
     }
 
+    /** Reads a report written by {@link #write}, e.g. to judge its stored answers again. */
+    public static EvalReport read(Path json) {
+        return JsonMapper.builder().build().readValue(json.toFile(), EvalReport.class);
+    }
+
     private static void traitRow(StringBuilder md, String trait, List<QuestionResult> withTrait) {
         if (withTrait.isEmpty()) {
             return;

@@ -165,6 +165,36 @@ class EvalScorerTest {
         assertThat(score(answerQuestion, refused, null).passed()).isFalse();
     }
 
+    @Test
+    void rejudgingAStoredResultReplacesTheJudgeFailureAndKeepsTheRunFields() {
+        QuestionResult stored = EvalScorer.score(answerQuestion, run(List.of(EXAMPLE), List.of(EXAMPLE), List.of()), 1200,
+                RETRIEVAL, null, "judge returned keyPoints [1], expected [1, 2]");
+
+        QuestionResult rejudged = EvalScorer.judged(stored, answerQuestion, judgement(List.of(true, true), List.of(false)), null);
+
+        assertThat(stored.passed()).isFalse();
+        assertThat(stored.note()).startsWith("judge failed");
+        assertThat(rejudged.passed()).isTrue();
+        assertThat(rejudged.note()).isNull();
+        assertThat(rejudged.keyPointsMet()).isEqualTo(2);
+        assertThat(rejudged.judgeCostUsd()).isEqualByComparingTo("0.0005");
+        assertThat(rejudged).usingRecursiveComparison()
+                .comparingOnlyFields("passageHit", "retrievalHit", "searchQueries", "agentCostUsd", "runId", "answer")
+                .isEqualTo(stored);
+    }
+
+    @Test
+    void rejudgingKeepsTheNoteOfARunThatDidNotComplete() {
+        AgentRunResult limited = new AgentRunResult(UUID.randomUUID(), RunStatus.MAX_TURNS_REACHED, "maxTurns=10", null,
+                List.of(), List.of(), List.of(), 10, TokenUsage.ZERO, new BigDecimal("0.10"));
+        QuestionResult stored = score(answerQuestion, limited, null);
+
+        QuestionResult rejudged = EvalScorer.judged(stored, answerQuestion, null, null);
+
+        assertThat(rejudged.note()).isEqualTo(stored.note()).startsWith("run ended MAX_TURNS_REACHED");
+        assertThat(rejudged.passed()).isFalse();
+    }
+
     private static QuestionResult score(GoldenQuestion question, AgentRunResult run, Judgement judgement) {
         return EvalScorer.score(question, run, 1200, RETRIEVAL, judgement, null);
     }
