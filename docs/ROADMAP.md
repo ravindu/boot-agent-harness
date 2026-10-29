@@ -84,6 +84,28 @@ GET  /api/agent/runs/{runId}/events       → SSE stream of steps
 
 Newest first. Lets a new session pick up where the last one stopped.
 
+- **2026-10-29, rejudged run2 reviewed, chunk-size experiment (retrieval only, $0):**
+  - `evals/reports/2026-10-21T150512Z-golden-73-run2-rejudged.md` (owner's re-judge with the 2026-10-22 fixes): **61/73 overall, answers 54/61, declines 7/12**, key points 139/150, 0 invented citations, $0.04 judge.
+    - Declines dropped 12/12 → 7/12 because of the new "names it while saying it could not confirm it" rule. The five failing declines (Kafka listener, Spring Security JWT, Config Client, RabbitMQ DLQ, Flyway) all name a property or class from memory. This is the intended behaviour under the rule, so it's a real failure, not a judge error.
+    - Answers 55 → 54: `web-slice-testing` and `test-rest-template-usage` now pass (reworded key points). `transactional-random-port-no-rollback`, `webmvc-test-skips-configuration-beans` and `graphql-test-slice` now fail. The first two are passage misses where the answer only hedges the point. `graphql-test-slice` is the one uncertain verdict (the two judge rounds disagree on whether the dependency "provides" the tester).
+    - **Still open:** the same re-judge for run1 (`…091819Z-golden-73-run1.json`). Not in `evals/reports/` yet. Owner's command, ~$0.04.
+  - **Chunk size (200 vs 150 vs 120 words), reports `2026-10-29T021742Z-retrieval-128-recheck`, `…024443Z-chunk-150w`, `…024515Z-chunk-120w`:** no clear gain.
+    - Question-text hit@5: 48 / 44 / 47. MRR: 0.565 / 0.571 / 0.632.
+    - Claude's replayed queries hit@5: 53 / 50 / 53. MRR: 0.680 / 0.632 / 0.654.
+    - Per question, 150 words loses more than it gains (7 vs 3 on question text). 120 words is a wash on hit@5 and better on MRR, but only on question text. **200 words stays.**
+    - The derived-trait check (tags computed on 200-word chunks) is now skippable with `-Deval.checkDerivedTraits=false`, and the report records that. Default on.
+    - Lesson: the remaining question-text misses are ranking problems (the right chunk is found at rank 6–20), not chunk-size problems. Candidates for M4: hybrid search and reranking.
+  - **M2 status:** the runner, judge, retrieval eval and golden set are done. Left: the owner's run1 re-judge, and a decision on the declines rule (strict as written, or allow a named property when it's flagged as unverified).
+
+- **2026-10-29, tokenizer-window experiment (retrieval only, $0):** `RetrievalEvalIT` now records `embeddingWindowTokens` in its report config (from `-Dspring.ai.embedding.transformer.tokenizer.options.maxLength`, default 128).
+  - Same 61 answer questions, same docs, two runs: `evals/reports/2026-10-29T021742Z-retrieval-128-recheck.md` (128, the current default) and `evals/reports/2026-10-29T021857Z-tokenizer-256.md` (256).
+  - Question-text hit@5 48 → 49, hit@8 51 → 50, MRR 0.57 → 0.56. Claude's replayed queries: hit@5 53 → 56, hit@8 59 → 59, MRR 0.68 → 0.66.
+  - Per question: question-text hit@5 gained 3, lost 2; replayed queries hit@5 gained 6, lost 3. Some near misses got worse (`dynamic-property-source-testing` 4 → 9, `rest-client-test-slice` 1 → 9, `webclient-test-slice` 10 → 18).
+  - **Result: no clear gain.** The 256 window is not adopted. The default stays 128. The open question is still about chunk size, not the tokenizer window.
+  - Not measured yet: the agent score (a live run, owner's call) and the embedding cost of 256.
+  - `./mvnw verify` green (no API key).
+  - Next (owner): the re-judge of run1 and run2 with the 2026-10-22 fixes (command below, ~$0.07). Then decide whether to try token-sized chunks (≤256 tokens) as the next retrieval experiment.
+
 - **2026-10-20, M2 started (branch `feature/m2-evals`, from `feature/m1-agent-loop`):**
   - `feature/m1-agent-loop` pushed. PR not opened yet: `gh` isn't logged in here, so the owner opens it.
   - Done: golden-set format with 3 example questions (paraphrased how-to, Boot 4 version-specific `@DataJpaTest`, out-of-scope Kafka trap), `GoldenQuestion`/`GoldenSet` loader, `GoldenSetTest` (6 tests, green).
@@ -149,5 +171,5 @@ Newest first. Lets a new session pick up where the last one stopped.
 
 ## Open questions
 
-- **Embedding window (found 2026-10-13):** `all-MiniLM-L6-v2`'s bundled `tokenizer.json` truncates at 128 tokens, so most chunks are only partly embedded (`docs/ingestion.md`, Step 5). Options: raise the tokenizer max length via `TransformersEmbeddingModel` tokenizer options (the model was trained on 256), size chunks by tokens, or move to Voyage AI. Decide with the M2 retrieval hit rate, not one question.
+- **Embedding window (found 2026-10-13):** `all-MiniLM-L6-v2`'s bundled `tokenizer.json` truncates at 128 tokens, so most chunks are only partly embedded (`docs/ingestion.md`, Step 5). Options: raise the tokenizer max length via `TransformersEmbeddingModel` tokenizer options (the model was trained on 256), size chunks by tokens, or move to Voyage AI. Decide with the M2 retrieval hit rate, not one question. **Update 2026-10-29:** raising the window to 256 tokens was measured (`evals/reports/2026-10-29T021857Z-tokenizer-256.md`) and gave no clear gain (MRR 0.57 → 0.56, gains and losses about equal). Not adopted. Chunk size was then tested too (next entry): 200 words stays.
 - **Model download on every start (found 2026-10-13):** Spring AI caches the 90 MB ONNX model in a new random temp dir per start (17 copies so far). A fixed cache directory via Spring AI's transformers embedding cache property would make restarts and ITs faster. Needs a config change; owner to approve.
