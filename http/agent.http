@@ -6,7 +6,7 @@ POST http://localhost:8080/api/agent/runs
 Content-Type: application/json
 
 {
-  "question": "How do I use @ServiceConnection with Testcontainers?"
+  "question": "What are the steps to implement springboot 4 ai agent?"
 }
 
 > {% client.global.set("runId", response.body.runId); %}

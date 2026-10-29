@@ -1,0 +1,439 @@
+{
+  "label" : "tokenizer-256",
+  "startedAt" : "2026-10-29T02:18:57Z",
+  "config" : {
+    "embedding" : "all-MiniLM-L6-v2 (local ONNX)",
+    "docs" : "Boot 4.1.1, 10 pages",
+    "maxWordsPerChunk" : "200",
+    "embeddingWindowTokens" : "256"
+  },
+  "queriesFrom" : "2026-10-21T150512Z-golden-73-run2.json",
+  "results" : [ {
+    "id" : "testcontainers-service-connection",
+    "expectedText" : [ "@ServiceConnection static Neo4jContainer neo4j" ],
+    "questionRank" : 0,
+    "agentQueries" : [ "Testcontainers @ServiceConnection database integration tests", "@DynamicPropertySource container URL" ],
+    "agentRank" : 8,
+    "topForQuestion" : [ "testing.testcontainers#0", "testing.testcontainers.spring-beans#0", "data.sql.datasource.embedded#0", "testing.spring-boot-applications.autoconfigured-spring-restdocs#0", "data.sql.r2dbc.embedded#0" ]
+  }, {
+    "id" : "data-jpa-test-boot4",
+    "expectedText" : [ "`@DataJpaTest` annotation from the `spring-boot-data-jpa-test` module" ],
+    "questionRank" : 4,
+    "agentQueries" : [ "@DataJpaTest auto-configuration and required module" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-spring-data-neo4j#0", "data#0", "testing.spring-boot-applications.autoconfigured-spring-data-redis#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "testing.spring-boot-applications.autoconfigured-spring-data-r2dbc#0" ]
+  }, {
+    "id" : "dynamic-property-source-testing",
+    "expectedText" : [ "A static `@DynamicPropertySource` method allows adding dynamic property values" ],
+    "questionRank" : 9,
+    "agentQueries" : [ "Testcontainers @DynamicPropertySource dynamic properties" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.utilities.test-property-values#0", "testing.spring-boot-applications.spring-webflux-tests#0", "testing.spring-boot-applications.detecting-configuration#1", "testing.utilities.config-data-application-context-initializer#0", "testing.spring-boot-applications.autoconfigured-tests#0" ]
+  }, {
+    "id" : "mockito-bean-replacement",
+    "expectedText" : [ "`@MockitoBean` annotation that can be used to define a Mockito mock" ],
+    "questionRank" : 5,
+    "agentQueries" : [ "@MockitoBean replace bean with mock in tests" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-tests#1", "testing.spring-boot-applications.user-configuration-and-slicing#1", "testing.spring-boot-applications.additional-autoconfiguration-and-slicing#0", "testing.spring-boot-applications.spring-mvc-tests#1", "testing.spring-boot-applications.mocking-beans#0" ]
+  }, {
+    "id" : "spy-existing-bean",
+    "expectedText" : [ "`@MockitoSpyBean` can be used to define a Mockito spy" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@MockitoSpyBean spy on Spring bean" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.mocking-beans#0", "testing.spring-boot-applications.autoconfigured-web-client#0", "testing.spring-boot-applications.spring-webflux-tests#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "testing.spring-boot-applications.spring-mvc-tests#0" ]
+  }, {
+    "id" : "web-slice-testing",
+    "expectedText" : [ "use the `@WebMvcTest` annotation from the `spring-boot-webmvc-test` module" ],
+    "questionRank" : 0,
+    "agentQueries" : [ "@WebMvcTest MockMvc test controllers without full application context" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications.autoconfigured-rest-client#1", "testing.spring-boot-applications.autoconfigured-spring-restdocs.with-mock-mvc#0", "testing.spring-boot-applications.autoconfigured-rest-client#0", "testing.spring-boot-applications.autoconfigured-spring-restdocs#0" ]
+  }, {
+    "id" : "rest-docs-integration",
+    "expectedText" : [ "calls `alwaysDo` with this result handler" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "Spring REST Docs auto-configured MockMvc generate documentation snippets" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-spring-restdocs.with-mock-mvc#1", "testing.spring-boot-applications.autoconfigured-spring-restdocs#0", "testing.spring-boot-applications.autoconfigured-spring-restdocs.with-mock-mvc#0", "testing.spring-boot-applications.spring-mvc-tests#1", "testing.utilities.test-rest-template#1" ]
+  }, {
+    "id" : "rest-test-client-boot4",
+    "expectedText" : [ "`RestTestClient` by annotating the test class with `@AutoConfigureRestTestClient`", "class MyRandomPortRestTestClientAssertJTests" ],
+    "questionRank" : 3,
+    "agentQueries" : [ "@SpringBootTest webEnvironment RANDOM_PORT client to call running server RestTestClient WebTestClient TestRestTemplate" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications.with-running-server#2", "testing.spring-boot-applications.with-running-server#1", "testing.spring-boot-applications.with-mock-environment#1", "testing.spring-boot-applications.with-mock-environment#0" ]
+  }, {
+    "id" : "test-web-environment-random-port",
+    "expectedText" : [ "an available port is picked at random each time your test runs" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@SpringBootTest webEnvironment RANDOM_PORT" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications#1", "testing.spring-boot-applications#2", "testing.spring-boot-applications.spring-graphql-tests#2", "testing.spring-boot-applications.autoconfigured-spring-restdocs#0" ]
+  }, {
+    "id" : "test-rest-template-usage",
+    "expectedText" : [ "by not throwing exceptions on 4xx and 5xx errors" ],
+    "questionRank" : 7,
+    "agentQueries" : [ "TestRestTemplate REST calls against running test server redirects" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications.with-running-server#1", "testing.test-modules#1", "testing.spring-boot-applications.autoconfigured-spring-restdocs#0" ]
+  }, {
+    "id" : "test-configuration-beans",
+    "expectedText" : [ "a nested `@TestConfiguration` class is used in addition to your application's primary configuration" ],
+    "questionRank" : 4,
+    "agentQueries" : [ "@TestConfiguration test-specific beans" ],
+    "agentRank" : 16,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-tests#1", "testing.spring-boot-applications.autoconfigured-web-client#0", "testing.spring-boot-applications.user-configuration-and-slicing#1", "testing.spring-boot-applications.detecting-configuration#1", "testing.testcontainers.spring-beans#0" ]
+  }, {
+    "id" : "jdbc-slice-test",
+    "expectedText" : [ "`@JdbcTest` from the `spring-boot-jdbc-test` module" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@JdbcTest JdbcTemplate test slice" ],
+    "agentRank" : 4,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-jdbc#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "testing.spring-boot-applications.autoconfigured-spring-data-jdbc#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#1", "testing.spring-boot-applications.autoconfigured-jooq#0" ]
+  }, {
+    "id" : "json-slice-testing",
+    "expectedText" : [ "use the `@JsonTest` annotation from the `spring-boot-test-autoconfigure` module" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@JsonTest auto-configured JSON tests" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.json-tests#0", "testing.spring-boot-applications.json-tests#1", "testing.spring-boot-applications.json-tests#2", "testing.test-scope-dependencies#0", "testing.spring-boot-applications.autoconfigured-rest-client#0" ]
+  }, {
+    "id" : "auto-configure-test-database",
+    "expectedText" : [ "@AutoConfigureTestDatabase(replace = Replace.NONE)" ],
+    "questionRank" : 12,
+    "agentQueries" : [ "@DataJpaTest use real database instead of embedded AutoConfigureTestDatabase replace", "Auto-configured Data JPA Tests AutoConfigureTestDatabase Replace.NONE" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "data.sql.datasource.embedded#0", "data.sql.jdbc#0", "data.sql.r2dbc.embedded#0", "data.sql.datasource.embedded#1", "testing.spring-boot-applications.autoconfigured-spring-data-r2dbc#0" ]
+  }, {
+    "id" : "capture-console-output",
+    "expectedText" : [ "add `@ExtendWith(OutputCaptureExtension.class)` and inject `CapturedOutput`" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "OutputCaptureExtension capture System.out System.err" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.utilities.output-capture#0", "testing.spring-boot-applications.with-running-server#2", "testing#0", "testing.spring-boot-applications.using-application-arguments#0", "testing.spring-boot-applications.json-tests#2" ]
+  }, {
+    "id" : "embedded-database-per-context",
+    "expectedText" : [ "set `spring.datasource.generate-unique-name` to `true`" ],
+    "questionRank" : 2,
+    "agentQueries" : [ "unique embedded database name per application context spring.datasource.generate-unique-name", "@AutoConfigureTestDatabase embedded database replace test unique name", "embedded database generate unique name" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.sql.r2dbc.embedded#0", "data.sql.datasource.embedded#0", "testing.spring-boot-applications.detecting-configuration#1", "testing.spring-boot-applications.autoconfigured-spring-data-r2dbc#0", "testing.testcontainers#0" ]
+  }, {
+    "id" : "connection-pooling-default",
+    "expectedText" : [ "We prefer HikariCP for its performance and concurrency." ],
+    "questionRank" : 1,
+    "agentQueries" : [ "connection pool auto-detection order HikariCP Tomcat DBCP2" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.sql.datasource.connection-pool#0", "data.sql.datasource.configuration#1", "testing.testcontainers.service-connections#0", "data.sql.datasource.lazy-connection#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0" ]
+  }, {
+    "id" : "testcontainers-as-beans",
+    "expectedText" : [ "To declare a container as a bean, add a `@Bean` method to your test configuration" ],
+    "questionRank" : 4,
+    "agentQueries" : [ "Testcontainers containers as beans @ServiceConnection @Bean" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.testcontainers.junit-extension#1", "testing.testcontainers.lifecycle#0", "testing.testcontainers.lifecycle#1", "testing.testcontainers.spring-beans#0", "testing.testcontainers.junit-extension#0" ]
+  }, {
+    "id" : "service-connection-redis-boot4",
+    "expectedText" : [ "| `DataRedisConnectionDetails` | Containers of type `RedisContainer`" ],
+    "questionRank" : 4,
+    "agentQueries" : [ "Testcontainers Redis @ServiceConnection @DataRedisTest", "@ServiceConnection static container field @Testcontainers example" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-spring-data-redis#0", "data.nosql.redis.connecting#0", "testing.testcontainers.service-connections#3", "testing.testcontainers.service-connections#2", "testing.spring-boot-applications.autoconfigured-spring-data-r2dbc#0" ]
+  }, {
+    "id" : "rest-client-test-slice",
+    "expectedText" : [ "use the `@RestClientTest` annotation from the `spring-boot-restclient-test` module" ],
+    "questionRank" : 9,
+    "agentQueries" : [ "@RestClientTest MockRestServiceServer" ],
+    "agentRank" : 4,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-rest-client#1", "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications.autoconfigured-webservices.server#0", "testing.spring-boot-applications.with-mock-environment#1" ]
+  }, {
+    "id" : "transactional-random-port-no-rollback",
+    "expectedText" : [ "the HTTP client and server run in separate threads and, thus, in separate transactions" ],
+    "questionRank" : 9,
+    "agentQueries" : [ "@SpringBootTest RANDOM_PORT @Transactional rollback not applied HTTP server", "test-managed transaction rollback @Transactional server separate thread" ],
+    "agentRank" : 4,
+    "topForQuestion" : [ "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications.with-running-server#1", "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications#2", "testing.spring-boot-applications.with-running-server#2" ]
+  }, {
+    "id" : "data-r2dbc-test-not-transactional",
+    "expectedText" : [ "By default, Data R2DBC tests are not transactional." ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@DataR2dbcTest transaction rollback", "@DataJpaTest transactional rolled back at end of each test" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-spring-data-r2dbc#0", "testing.spring-boot-applications.autoconfigured-spring-data-jdbc#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "testing.spring-boot-applications.autoconfigured-jdbc#0", "testing.test-modules#0" ]
+  }, {
+    "id" : "data-jpa-show-sql",
+    "expectedText" : [ "This can be disabled using the `showSql` attribute of the annotation." ],
+    "questionRank" : 2,
+    "agentQueries" : [ "@DataJpaTest SQL logging show-sql" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "data.sql.jooq.sqldialect#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "data.sql.jdbc#0", "data.nosql.redis.receiving#1", "testing.spring-boot-applications.autoconfigured-spring-data-jdbc#0" ]
+  }, {
+    "id" : "test-entity-manager-outside-slice",
+    "expectedText" : [ "`TestEntityManager` can also be auto-configured to any of your Spring-based test class by adding `@AutoConfigureTestEntityManager`." ],
+    "questionRank" : 1,
+    "agentQueries" : [ "TestEntityManager @SpringBootTest @AutoConfigureTestEntityManager" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-spring-data-jpa#1", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "testing.spring-boot-applications#0", "testing.spring-boot-applications.autoconfigured-spring-data-jdbc#0", "testing.spring-boot-applications.autoconfigured-jdbc#0" ]
+  }, {
+    "id" : "slice-extra-autoconfiguration",
+    "expectedText" : [ "by adding `@ImportAutoConfiguration` to the test" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@JdbcTest include additional auto-configuration @ImportAutoConfiguration", "User configuration and slicing: ImportAutoConfiguration, META-INF/spring/…ImportAutoConfiguration.imports" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.additional-autoconfiguration-and-slicing#0", "testing.spring-boot-applications.autoconfigured-tests#1", "testing.spring-boot-applications.autoconfigured-jdbc#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#1", "testing.spring-boot-applications.user-configuration-and-slicing#1" ]
+  }, {
+    "id" : "multiple-slices-one-test",
+    "expectedText" : [ "Including multiple \"slices\" by using several `@...Test` annotations in one test is not supported." ],
+    "questionRank" : 11,
+    "agentQueries" : [ "combining @WebMvcTest and @DataJpaTest on same test class", "multiple @...Test slice annotations auto-configuration only one" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.user-configuration-and-slicing#1", "testing.spring-boot-applications.spring-mvc-tests#0", "testing.spring-boot-applications.spring-mvc-tests#1", "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications.spring-mvc-tests#2" ]
+  }, {
+    "id" : "use-main-method",
+    "expectedText" : [ "change the `useMainMethod` attribute of `@SpringBootTest`" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@SpringBootTest useMainMethod SpringApplication main method" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "testing.spring-boot-applications.using-main#1", "testing.spring-boot-applications.using-main#0", "testing.spring-boot-applications#0", "testing.spring-boot-applications.detecting-configuration#1", "testing.spring-boot-applications.detecting-configuration#0" ]
+  }, {
+    "id" : "metrics-in-integration-tests",
+    "expectedText" : [ "meter registries, except the in-memory backed, are not auto-configured when using `@SpringBootTest`" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "metrics export in @SpringBootTest" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.metrics#0", "testing.spring-boot-applications.tracing#0", "testing.spring-boot-applications.observations#0", "testing.spring-boot-applications.excluding-configuration#0", "testing.spring-boot-applications.spring-mvc-tests#0" ]
+  }, {
+    "id" : "webflux-test-security-chain",
+    "expectedText" : [ "`@WebFluxTest` cannot detect custom security configuration registered as a `@Bean` of type `SecurityWebFilterChain`." ],
+    "questionRank" : 2,
+    "agentQueries" : [ "@WebFluxTest SecurityWebFilterChain security configuration" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "testing.spring-boot-applications.spring-webflux-tests#0", "testing.spring-boot-applications.spring-webflux-tests#1", "testing.spring-boot-applications.autoconfigured-web-client#0", "testing.spring-boot-applications.autoconfigured-spring-restdocs.with-web-test-client#0", "testing.spring-boot-applications.detecting-web-app-type#0" ]
+  }, {
+    "id" : "webmvc-test-skips-configuration-beans",
+    "expectedText" : [ "Test slices exclude `@Configuration` classes from scanning." ],
+    "questionRank" : 2,
+    "agentQueries" : [ "@WebMvcTest scanned beans WebMvcConfigurer @Configuration @Bean" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.spring-mvc-tests#0", "testing.spring-boot-applications.user-configuration-and-slicing#1", "testing.spring-boot-applications.spring-mvc-tests#1", "testing.spring-boot-applications.autoconfigured-web-client#0", "testing.spring-boot-applications.spring-webflux-tests#0" ]
+  }, {
+    "id" : "service-connection-custom-image",
+    "expectedText" : [ "If you are using the Docker image `registry.mycompany.com/mirror/myredis`" ],
+    "questionRank" : 2,
+    "agentQueries" : [ "@ServiceConnection Redis container custom image name connection details" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.nosql.redis.connecting#0", "testing.testcontainers.service-connections#3", "data.nosql.redis.connecting#1", "testing.testcontainers.service-connections#2", "data.nosql.redis.receiving#0" ]
+  }, {
+    "id" : "service-connection-subset-types",
+    "expectedText" : [ "If you want to create only a subset of the applicable types, you can use the `type` attribute of `@ServiceConnection`." ],
+    "questionRank" : 5,
+    "agentQueries" : [ "@ServiceConnection restrict connection details types PostgreSQLContainer JDBC R2DBC", "@ServiceConnection type attribute limit connection details types" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "data.sql.r2dbc#1", "data.sql.r2dbc#0", "data.sql.datasource.lazy-connection#0", "data.sql.jdbc#0", "testing.testcontainers.service-connections#2" ]
+  }, {
+    "id" : "testcontainers-ssl-client-side",
+    "expectedText" : [ "the annotations only configure SSL on the client side in your application" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@PemKeyStore @PemTrustStore Testcontainers Redis SSL" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.testcontainers.service-connections.ssl#0", "testing.testcontainers.service-connections.ssl#1", "data.nosql.redis.connecting#1", "testing.spring-boot-applications.autoconfigured-spring-data-redis#0", "testing.spring-boot-applications.autoconfigured-spring-data-elasticsearch#0" ]
+  }, {
+    "id" : "data-ldap-real-server",
+    "expectedText" : [ "@DataLdapTest(excludeAutoConfiguration = EmbeddedLdapAutoConfiguration.class)" ],
+    "questionRank" : 3,
+    "agentQueries" : [ "@DataLdapTest real LDAP server instead of embedded" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "data.nosql.ldap.embedded#0", "data.nosql.ldap#0", "testing.spring-boot-applications.autoconfigured-spring-data-ldap#0", "data.nosql.ldap.embedded.ssl#0", "data.nosql.ldap.connecting#0" ]
+  }, {
+    "id" : "json-number-assertions",
+    "expectedText" : [ "Instead, you can use AssertJ's `satisfies` to assert that the value matches the given condition." ],
+    "questionRank" : 3,
+    "agentQueries" : [ "@JsonTest extractingJsonPathNumberValue assert number JSON" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "testing.spring-boot-applications.json-tests#2", "testing.spring-boot-applications.json-tests#0", "testing.spring-boot-applications.json-tests#1", "testing.test-scope-dependencies#0", "testing.utilities.test-property-values#0" ]
+  }, {
+    "id" : "json-testers-without-jsontest",
+    "expectedText" : [ "call the `initFields` method of the helper in your `@BeforeEach` method" ],
+    "questionRank" : 3,
+    "agentQueries" : [ "JacksonTester initFields without @JsonTest" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "testing.spring-boot-applications.json-tests#0", "testing.spring-boot-applications.json-tests#2", "testing.spring-boot-applications.json-tests#1", "testing.spring-boot-applications.autoconfigured-rest-client#0", "testing.spring-boot-applications.autoconfigured-web-client#0" ]
+  }, {
+    "id" : "graphql-test-slice",
+    "expectedText" : [ "`@GraphQlTest` auto-configures the Spring GraphQL infrastructure, without any transport nor server being involved." ],
+    "questionRank" : 2,
+    "agentQueries" : [ "@GraphQlTest testing GraphQL controller without server" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "testing.spring-boot-applications.spring-graphql-tests#2", "testing.spring-boot-applications.spring-graphql-tests#0", "testing.spring-boot-applications.spring-graphql-tests#1", "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications.with-mock-environment#0" ]
+  }, {
+    "id" : "webclient-test-slice",
+    "expectedText" : [ "use the `@WebClientTest` annotation from the `spring-boot-webclient-test` module" ],
+    "questionRank" : 18,
+    "agentQueries" : [ "@RestClientTest WebClient test slice", "testing code that uses WebClient, MockWebServer, auto-configured tests list" ],
+    "agentRank" : 7,
+    "topForQuestion" : [ "testing.spring-boot-applications.customizing-rest-test-client#0", "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications.customizing-web-test-client#0", "testing.utilities.test-rest-template#1", "testing.utilities.test-rest-template#0" ]
+  }, {
+    "id" : "r2dbc-unique-embedded-database",
+    "expectedText" : [ "you should set `spring.r2dbc.generate-unique-name` to `true`" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "embedded R2DBC database unique name per context testing" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.sql.r2dbc.embedded#0", "testing.spring-boot-applications.autoconfigured-spring-data-r2dbc#0", "data.sql.r2dbc#0", "data.sql.datasource.embedded#0", "data.sql.r2dbc.using-database-client#0" ]
+  }, {
+    "id" : "lazy-connection-fetch",
+    "expectedText" : [ "by setting `spring.datasource.connection-fetch` to `lazy`" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "lazy connection DataSource fetch JDBC connection until statement executed" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.sql.datasource.lazy-connection#0", "data.sql.datasource.embedded#1", "data.sql.datasource.connection-pool#0", "data.sql.jdbc#0", "data.sql.datasource.configuration#1" ]
+  }, {
+    "id" : "r2dbc-keeps-jdbc-datasource",
+    "expectedText" : [ "add `@Import(DataSourceAutoConfiguration.class)` on a `@Configuration` class" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "R2DBC and JDBC DataSource auto-configuration back off" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.sql.r2dbc#1", "data.sql.r2dbc#0", "data.sql.r2dbc.embedded#0", "data.sql.datasource.embedded#1", "data.sql.r2dbc.using-database-client#0" ]
+  }, {
+    "id" : "test-rest-template-timeouts",
+    "expectedText" : [ "additional customizations can be applied through the `RestTemplateBuilder` bean" ],
+    "questionRank" : 4,
+    "agentQueries" : [ "TestRestTemplate connect and read timeout RANDOM_PORT" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.sql.datasource.configuration#1", "testing.spring-boot-applications.with-running-server#0", "testing.spring-boot-applications#2", "testing.utilities.test-rest-template#1", "testing.spring-boot-applications.with-running-server#2" ]
+  }, {
+    "id" : "config-data-initializer-value",
+    "expectedText" : [ "Its only job is to ensure that `application.properties` files are loaded into Spring's `Environment`." ],
+    "questionRank" : 1,
+    "agentQueries" : [ "ConfigDataApplicationContextInitializer @Value placeholder" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.utilities.config-data-application-context-initializer#0", "testing.utilities.test-property-values#0", "testing.spring-boot-applications.detecting-configuration#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "testing.spring-boot-applications.autoconfigured-tests#0" ]
+  }, {
+    "id" : "component-scan-breaks-slices",
+    "expectedText" : [ "Doing so effectively overrides the default component scan directive" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@DataJpaTest @ComponentScan on main application class test slices" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.user-configuration-and-slicing#2", "testing.spring-boot-applications.autoconfigured-spring-data-cassandra#0", "testing.spring-boot-applications.autoconfigured-spring-data-redis#0", "testing.spring-boot-applications.autoconfigured-spring-data-neo4j#0", "testing.spring-boot-applications.excluding-configuration#0" ]
+  }, {
+    "id" : "testcontainers-cached-context-stopped",
+    "expectedText" : [ "container instances are stopped after the test class has run (for static fields)" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "Testcontainers static @Container context caching @ServiceConnection" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.testcontainers.junit-extension#1", "testing.testcontainers.lifecycle#1", "data.sql.r2dbc.embedded#0", "testing.spring-boot-applications.detecting-configuration#1", "data.sql.datasource.embedded#0" ]
+  }, {
+    "id" : "service-connection-generic-container-bean",
+    "expectedText" : [ "Spring Boot can't tell from `GenericContainer` which container image is used" ],
+    "questionRank" : 2,
+    "agentQueries" : [ "@ServiceConnection GenericContainer Redis connection details name" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.nosql.redis.connecting#0", "testing.testcontainers.service-connections#3", "data.nosql.redis.receiving#0", "testing.spring-boot-applications.autoconfigured-spring-data-redis#0", "data.nosql.redis.receiving#1" ]
+  }, {
+    "id" : "rabbit-streams-service-connection",
+    "expectedText" : [ "The container must also expose port 5552, or port 5551 when SSL is configured, for RabbitMQ Streams." ],
+    "questionRank" : 1,
+    "agentQueries" : [ "RabbitMQContainer @ServiceConnection RabbitMQ Streams connection details" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.testcontainers.service-connections#2", "testing.testcontainers.service-connections#3", "testing.testcontainers.service-connections#0", "testing.testcontainers.service-connections#1", "testing.spring-boot-applications.spring-graphql-tests#2" ]
+  }, {
+    "id" : "service-connection-vs-dynamic-properties",
+    "expectedText" : [ "This is done by automatically defining a `Neo4jConnectionDetails` bean", "A slightly more verbose but also more flexible alternative to service connections" ],
+    "questionRank" : 2,
+    "agentQueries" : [ "Neo4j Testcontainers @ServiceConnection", "@DynamicPropertySource Testcontainers", "Testcontainers service connections Neo4jContainer ConnectionDetails" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.testcontainers.dynamic-properties#0", "testing.testcontainers.service-connections#0", "testing.spring-boot-applications.autoconfigured-spring-data-neo4j#0", "testing.testcontainers.importing-configuration-interfaces#0", "testing.testcontainers.junit-extension#0" ]
+  }, {
+    "id" : "data-jpa-test-with-testcontainers",
+    "expectedText" : [ "@AutoConfigureTestDatabase(replace = Replace.NONE)", "connection details can be automatically created for a service running in a container by annotating the container field in the test class" ],
+    "questionRank" : 0,
+    "agentQueries" : [ "@DataJpaTest Testcontainers PostgreSQL instead of embedded database", "Testcontainers @ServiceConnection PostgreSQLContainer" ],
+    "agentRank" : 7,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-spring-data-r2dbc#0", "data.sql.datasource.embedded#0", "data.sql.r2dbc.embedded#0", "testing.spring-boot-applications.autoconfigured-jooq#0", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0" ]
+  }, {
+    "id" : "graphql-http-tester-mockmvc",
+    "expectedText" : [ "A `HttpGraphQlTester` bean can be added by annotating your test class with `@AutoConfigureHttpGraphQlTester`", "To bind the tester to `MockMvc`, make sure to annotate your test class with `@AutoConfigureMockMvc`." ],
+    "questionRank" : 4,
+    "agentQueries" : [ "HttpGraphQlTester @SpringBootTest MockMvc" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.spring-graphql-tests#2", "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications.spring-graphql-tests#0", "testing.spring-boot-applications.spring-graphql-tests#1", "testing.spring-boot-applications.spring-mvc-tests#1" ]
+  }, {
+    "id" : "rest-client-test-full-uri",
+    "expectedText" : [ "the full URI must be used in the `MockRestServiceServer` expectations" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@RestClientTest MockRestServiceServer requestTo base URL RestClient.Builder" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-rest-client#1", "testing.spring-boot-applications.customizing-rest-test-client#0", "testing.utilities.test-rest-template#0", "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications.with-running-server#2" ]
+  }, {
+    "id" : "test-configuration-ordering",
+    "expectedText" : [ "An imported `@TestConfiguration` is processed earlier than an inner-class `@TestConfiguration`" ],
+    "questionRank" : 3,
+    "agentQueries" : [ "@TestConfiguration nested vs imported top-level, bean override order" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.detecting-configuration#0", "testing.spring-boot-applications.detecting-configuration#1", "testing.spring-boot-applications.excluding-configuration#0", "testing.spring-boot-applications.user-configuration-and-slicing#1", "testing.spring-boot-applications.spring-webflux-tests#0" ]
+  }, {
+    "id" : "jpa-deferred-bootstrap",
+    "expectedText" : [ "set the `spring.data.jpa.repositories.bootstrap-mode` property to `deferred` or `lazy`", "You can use `SmartInitializingSingleton` to invoke any initialization that requires the JPA infrastructure." ],
+    "questionRank" : 4,
+    "agentQueries" : [ "Spring Data JPA repositories bootstrap mode background", "spring.data.jpa.repositories.bootstrap-mode deferred lazy applicationTaskExecutor" ],
+    "agentRank" : 3,
+    "topForQuestion" : [ "data.sql.jpa-and-spring-data.repositories#1", "testing.spring-boot-applications.autoconfigured-spring-data-jpa#0", "data.sql.jdbc#0", "data.sql.jpa-and-spring-data.repositories#0", "data#0" ]
+  }, {
+    "id" : "redis-template-override",
+    "expectedText" : [ "when the exclusion is based on the bean name, `redisTemplate`, not its type" ],
+    "questionRank" : 11,
+    "agentQueries" : [ "RedisTemplate auto-configuration @ConditionalOnMissingBean redisTemplate bean name" ],
+    "agentRank" : 13,
+    "topForQuestion" : [ "testing.spring-boot-applications.autoconfigured-spring-data-redis#0", "data.nosql.redis.connecting#0", "data.nosql.redis.receiving#0", "data.nosql.redis.receiving#1", "data.nosql.redis#0" ]
+  }, {
+    "id" : "named-parameter-jdbc-template-missing",
+    "expectedText" : [ "If more than one `JdbcTemplate` is defined and no primary candidate exists, the `NamedParameterJdbcTemplate` is not auto-configured." ],
+    "questionRank" : 2,
+    "agentQueries" : [ "NamedParameterJdbcTemplate auto-configuration multiple JdbcTemplate beans" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "data.sql.jdbc-client#0", "data.sql.jdbc-template#0", "data.sql.r2dbc.embedded#0", "data.sql.r2dbc#1", "data.nosql.elasticsearch.connecting-using-spring-data#0" ]
+  }, {
+    "id" : "webmvc-test-module-boot4",
+    "expectedText" : [ "use the `@WebMvcTest` annotation from the `spring-boot-webmvc-test` module" ],
+    "questionRank" : 2,
+    "agentQueries" : [ "@WebMvcTest package import module spring-boot-webmvc-test" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.spring-mvc-tests#1", "testing.spring-boot-applications.spring-mvc-tests#0", "testing.spring-boot-applications.with-mock-environment#1", "testing.spring-boot-applications.user-configuration-and-slicing#1", "testing.spring-boot-applications.autoconfigured-spring-restdocs.with-mock-mvc#0" ]
+  }, {
+    "id" : "test-rest-template-restclient-dependency",
+    "expectedText" : [ "It's provided by the `spring-boot-resttestclient` module." ],
+    "questionRank" : 2,
+    "agentQueries" : [ "TestRestTemplate dependencies" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.spring-boot-applications.with-running-server#2", "testing.utilities.test-rest-template#0", "testing#0", "testing.utilities.test-rest-template#1", "testing.test-modules#0" ]
+  }, {
+    "id" : "mockbean-boot4",
+    "expectedText" : [ "`@MockitoBean` annotation that can be used to define a Mockito mock" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@MockBean mock a bean in test" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.mocking-beans#0", "testing.spring-boot-applications.with-mock-environment#1", "testing.spring-boot-applications.spring-mvc-tests#1", "testing.spring-boot-applications.spring-webflux-tests#1", "testing.spring-boot-applications.autoconfigured-spring-restdocs.with-mock-mvc#0" ]
+  }, {
+    "id" : "jsontest-jackson-boot4",
+    "expectedText" : [ "Jackson 2 (deprecated) `ObjectMapper`" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@JsonTest auto-configured JSON mappers Jackson Gson JSON-B", "Jackson 2 ObjectMapper support Jackson 3 JsonMapper" ],
+    "agentRank" : 1,
+    "topForQuestion" : [ "testing.spring-boot-applications.json-tests#0", "testing.spring-boot-applications.json-tests#2", "testing.spring-boot-applications.json-tests#1", "testing.spring-boot-applications.autoconfigured-web-client#0", "testing.spring-boot-applications.spring-mvc-tests#0" ]
+  }, {
+    "id" : "kafka-testcontainer-partial",
+    "expectedText" : [ "Containers of type `KafkaContainer`, `ConfluentKafkaContainer` or `RedpandaContainer`" ],
+    "questionRank" : 1,
+    "agentQueries" : [ "@ServiceConnection Kafka container Testcontainers", "Kafka consumer group id property spring.kafka.consumer.group-id test", "Kafka spring.kafka.consumer.group-id dynamic properties DynamicPropertyRegistry" ],
+    "agentRank" : 2,
+    "topForQuestion" : [ "testing.testcontainers.service-connections#1", "testing.testcontainers#0", "testing.spring-boot-applications.autoconfigured-spring-data-cassandra#0", "testing.testcontainers.service-connections#2", "testing.spring-boot-applications.autoconfigured-jooq#0" ]
+  }, {
+    "id" : "mockito-bean-reset-partial",
+    "expectedText" : [ "Often, `@WebMvcTest` is limited to a single controller and is used in combination with `@MockitoBean`" ],
+    "questionRank" : 10,
+    "agentQueries" : [ "@WebMvcTest mock collaborator @MockitoBean", "MockitoBean reset mock between tests", "MockitoBean reset attribute MockReset" ],
+    "agentRank" : 5,
+    "topForQuestion" : [ "testing.spring-boot-applications.spring-mvc-tests#1", "testing.spring-boot-applications.with-mock-environment#0", "testing.spring-boot-applications.with-mock-environment#1", "testing.spring-boot-applications.spring-webflux-tests#1", "testing.spring-boot-applications.spring-graphql-tests#2" ]
+  } ]
+}

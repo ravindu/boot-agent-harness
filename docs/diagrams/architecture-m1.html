@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs Agent Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@700&family=Inter:wght@500;600&family=Geist+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDF1F3;   /* Mist */
+    --paper-2: #FFFFFF; /* Talc */
+    --ink: #000000;     /* Onyx */
+    --muted: #003D4F;   /* Wave */
+    --accent: #F2617A;  /* Flamingo */
+    --link: #47A1AD;    /* Sapphire */
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Inter, system-ui, sans-serif;
+  }
+  main { max-width: 1220px; margin: 0 auto; padding: 40px 16px 48px; }
+  .eyebrow {
+    font: 600 12px/1 Inter, sans-serif;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+  }
+  h1 { font: 700 34px/1.15 Bitter, Georgia, serif; margin: 0 0 8px; }
+  .lede { font: 500 15px/1.5 Inter, sans-serif; margin: 0 0 28px; max-width: 70ch; }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; min-width: 1180px; height: auto; }
+
+  .zone { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 4; }
+  .zone-label { font: 600 10px Inter, sans-serif; letter-spacing: .1em; fill: var(--ink); }
+  .zone-label .mono { font: 500 10px "Geist Mono", ui-monospace, monospace; letter-spacing: 0; }
+
+  .mask { fill: var(--paper); }
+  .node { fill: var(--paper-2); stroke: var(--muted); stroke-width: 1; }
+  .node.focal { stroke: var(--accent); stroke-width: 2; }
+  .node.external { stroke: var(--link); stroke-width: 1.5; }
+  .node.store { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 6 3; }
+  .tag-box { fill: var(--paper); }
+  .tag-box.focal { fill: var(--accent); }
+  .tag { font: 600 9px Inter, sans-serif; letter-spacing: .08em; fill: var(--ink); }
+  .name { font: 600 14px Inter, sans-serif; fill: var(--ink); }
+  .sub { font: 500 11px Inter, sans-serif; fill: var(--ink); }
+  .sub.mono { font: 500 10.5px "Geist Mono", ui-monospace, monospace; }
+
+  .arrow { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+  .arrow.link { stroke: var(--link); }
+  .arrow.dashed { stroke-dasharray: 5 4; }
+  .alabel { font: 600 10px Inter, sans-serif; letter-spacing: .06em; fill: var(--ink); }
+
+  .callout { font: 500 12px Inter, sans-serif; fill: var(--ink); }
+  .callout-rule { stroke: var(--accent); stroke-width: 2; }
+  .legend { font: 500 11px Inter, sans-serif; fill: var(--ink); }
+  .legend-rule { stroke: var(--muted); stroke-width: 1; opacity: .3; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Spring Docs Agent · Milestone M1</p>
+  <h1>What runs today</h1>
+  <p class="lede">A hand-written agent loop on the Anthropic Java SDK, one retrieval tool over the Boot 4.1.1 reference docs, and a trace of every step in Postgres.</p>
+
+  <div class="scroll">
+  <svg viewBox="0 0 1180 600" role="img" aria-labelledby="architecture-m1-title architecture-m1-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="architecture-m1-title">Spring Docs Agent M1 architecture</title>
+    <desc id="architecture-m1-desc">The REST API starts an AgentLoop that exchanges messages with Claude, runs the searchDocs tool against pgvector and records every step to trace tables, while a separate ingestion pipeline parses, chunks and embeds the Boot docs into pgvector.</desc>
+    <defs>
+      <marker id="am1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#003D4F"/>
+      </marker>
+      <marker id="am1-arrow-link" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#47A1AD"/>
+      </marker>
+    </defs>
+
+    <!-- Zones -->
+    <rect class="zone" x="20" y="36" width="1140" height="304"/>
+    <text class="zone-label" x="36" y="60">AGENT RUN · ONE QUESTION, MANY TURNS</text>
+    <rect class="zone" x="20" y="364" width="1140" height="152"/>
+    <text class="zone-label" x="36" y="388">INGESTION · <tspan class="mono">POST /api/ingestion/runs</tspan></text>
+
+    <!-- Arrows (drawn before nodes) -->
+    <!-- API -> AgentLoop -->
+    <line class="arrow" x1="240" y1="120" x2="338" y2="120" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="272" y="100" width="36" height="12"/>
+    <text class="alabel" x="290" y="109.5" text-anchor="middle">RUN</text>
+
+    <!-- AgentLoop -> Claude (request) -->
+    <line class="arrow link" x1="540" y1="104" x2="638" y2="104" marker-end="url(#am1-arrow-link)"/>
+    <rect class="mask" x="556" y="85" width="68" height="12"/>
+    <text class="alabel" x="590" y="94.5" text-anchor="middle">MESSAGES</text>
+
+    <!-- Claude -> AgentLoop (response) -->
+    <line class="arrow link dashed" x1="640" y1="136" x2="542" y2="136" marker-end="url(#am1-arrow-link)"/>
+    <rect class="mask" x="546" y="143" width="88" height="12"/>
+    <text class="alabel" x="590" y="152.5" text-anchor="middle">STOP_REASON</text>
+
+    <!-- AgentLoop -> searchDocs (tool_use) -->
+    <path class="arrow" d="M512,156 L512,260 Q512,268 520,268 L638,268" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="546" y="247" width="68" height="12"/>
+    <text class="alabel" x="580" y="256.5" text-anchor="middle">TOOL_USE</text>
+
+    <!-- searchDocs -> AgentLoop (tool_result) -->
+    <path class="arrow dashed" d="M640,292 L488,292 Q480,292 480,284 L480,158" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="524" y="300" width="92" height="12"/>
+    <text class="alabel" x="570" y="309.5" text-anchor="middle">TOOL_RESULT</text>
+
+    <!-- AgentLoop -> Run trace -->
+    <path class="arrow" d="M380,156 L380,284 Q380,292 372,292 L242,292" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="266" y="271" width="80" height="12"/>
+    <text class="alabel" x="306" y="280.5" text-anchor="middle">EVERY STEP</text>
+
+    <!-- API -> Run trace (read) -->
+    <line class="arrow dashed" x1="140" y1="156" x2="140" y2="242" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="150" y="194" width="72" height="12"/>
+    <text class="alabel" x="152" y="203.5">GET TRACE</text>
+
+    <!-- searchDocs -> pgvector -->
+    <path class="arrow" d="M840,280 L1032,280 Q1040,280 1040,288 L1040,402" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="898" y="260" width="76" height="12"/>
+    <text class="alabel" x="936" y="269.5" text-anchor="middle">SIMILARITY</text>
+
+    <!-- Ingestion row -->
+    <line class="arrow" x1="240" y1="440" x2="338" y2="440" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="266" y="419" width="48" height="12"/>
+    <text class="alabel" x="290" y="428.5" text-anchor="middle">PAGES</text>
+
+    <line class="arrow" x1="540" y1="440" x2="638" y2="440" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="562" y="419" width="56" height="12"/>
+    <text class="alabel" x="590" y="428.5" text-anchor="middle">CHUNKS</text>
+
+    <line class="arrow" x1="840" y1="440" x2="938" y2="440" marker-end="url(#am1-arrow)"/>
+    <rect class="mask" x="858" y="419" width="64" height="12"/>
+    <text class="alabel" x="890" y="428.5" text-anchor="middle">VECTORS</text>
+
+    <!-- Nodes -->
+    <!-- REST API -->
+    <g>
+      <rect class="mask" x="40" y="84" width="200" height="72"/>
+      <rect class="node" x="40" y="84" width="200" height="72"/>
+      <rect class="tag-box" x="52" y="94" width="62" height="14"/>
+      <text class="tag" x="58" y="104.5">REST API</text>
+      <text class="name" x="52" y="126">AgentRunController</text>
+      <text class="sub mono" x="52" y="144">POST · GET /api/agent/runs</text>
+    </g>
+
+    <!-- AgentLoop (focal) -->
+    <g>
+      <rect class="mask" x="340" y="84" width="200" height="72"/>
+      <rect class="node focal" x="340" y="84" width="200" height="72"/>
+      <rect class="tag-box focal" x="352" y="94" width="56" height="14"/>
+      <text class="tag" x="358" y="104.5">HARNESS</text>
+      <text class="name" x="352" y="126">AgentLoop</text>
+      <text class="sub" x="352" y="144">limits · cost · citation check</text>
+    </g>
+
+    <!-- Claude API -->
+    <g>
+      <rect class="mask" x="640" y="84" width="200" height="72"/>
+      <rect class="node external" x="640" y="84" width="200" height="72"/>
+      <rect class="tag-box" x="652" y="94" width="62" height="14"/>
+      <text class="tag" x="658" y="104.5">EXTERNAL</text>
+      <text class="name" x="652" y="126">Claude Messages API</text>
+      <text class="sub" x="652" y="144">via LlmGateway · sonnet-5-5</text>
+    </g>
+
+    <!-- Run trace -->
+    <g>
+      <rect class="mask" x="40" y="244" width="200" height="72"/>
+      <rect class="node store" x="40" y="244" width="200" height="72"/>
+      <rect class="tag-box" x="52" y="254" width="44" height="14"/>
+      <text class="tag" x="58" y="264.5">STORE</text>
+      <text class="name" x="52" y="286">Run trace</text>
+      <text class="sub mono" x="52" y="304">agent_run / step / message</text>
+    </g>
+
+    <!-- searchDocs -->
+    <g>
+      <rect class="mask" x="640" y="244" width="200" height="72"/>
+      <rect class="node" x="640" y="244" width="200" height="72"/>
+      <rect class="tag-box" x="652" y="254" width="36" height="14"/>
+      <text class="tag" x="658" y="264.5">TOOL</text>
+      <text class="name" x="652" y="286">searchDocs</text>
+      <text class="sub" x="652" y="304">ToolExecutor · labels S1…Sn</text>
+    </g>
+
+    <!-- GitHub source -->
+    <g>
+      <rect class="mask" x="40" y="404" width="200" height="72"/>
+      <rect class="node external" x="40" y="404" width="200" height="72"/>
+      <rect class="tag-box" x="52" y="414" width="50" height="14"/>
+      <text class="tag" x="58" y="424.5">SOURCE</text>
+      <text class="name" x="52" y="446">spring-boot repo</text>
+      <text class="sub mono" x="52" y="464">*.adoc @ v4.1.1</text>
+    </g>
+
+    <!-- Ingestion pipeline -->
+    <g>
+      <rect class="mask" x="340" y="404" width="200" height="72"/>
+      <rect class="node" x="340" y="404" width="200" height="72"/>
+      <rect class="tag-box" x="352" y="414" width="62" height="14"/>
+      <text class="tag" x="358" y="424.5">PIPELINE</text>
+      <text class="name" x="352" y="446">IngestionService</text>
+      <text class="sub" x="352" y="464">AsciiDocParser → Chunker</text>
+    </g>
+
+    <!-- Embeddings -->
+    <g>
+      <rect class="mask" x="640" y="404" width="200" height="72"/>
+      <rect class="node" x="640" y="404" width="200" height="72"/>
+      <rect class="tag-box" x="652" y="414" width="80" height="14"/>
+      <text class="tag" x="658" y="424.5">LOCAL MODEL</text>
+      <text class="name" x="652" y="446">ONNX embeddings</text>
+      <text class="sub mono" x="652" y="464">all-MiniLM-L6-v2</text>
+    </g>
+
+    <!-- pgvector -->
+    <g>
+      <rect class="mask" x="940" y="404" width="200" height="72"/>
+      <rect class="node store" x="940" y="404" width="200" height="72"/>
+      <rect class="tag-box" x="952" y="414" width="44" height="14"/>
+      <text class="tag" x="958" y="424.5">STORE</text>
+      <text class="name" x="952" y="446">pgvector</text>
+      <text class="sub mono" x="952" y="464">vector_store · :5433</text>
+    </g>
+
+    <!-- Callout -->
+    <line class="callout-rule" x1="900" y1="88" x2="900" y2="152"/>
+    <text class="callout" x="912" y="100">Append-only history: each turn</text>
+    <text class="callout" x="912" y="116">appends response.toParam()</text>
+    <text class="callout" x="912" y="132">unchanged. Limits are checked</text>
+    <text class="callout" x="912" y="148">before every model call.</text>
+
+    <!-- Legend strip -->
+    <line class="legend-rule" x1="20" y1="536" x2="1160" y2="536"/>
+    <rect x="20" y="556" width="20" height="14" fill="#FFFFFF" stroke="#F2617A" stroke-width="2"/>
+    <text class="legend" x="48" y="567">Focal: hand-written loop</text>
+    <rect x="212" y="556" width="20" height="14" fill="#FFFFFF" stroke="#003D4F" stroke-width="1"/>
+    <text class="legend" x="240" y="567">Our code</text>
+    <rect x="324" y="556" width="20" height="14" fill="#FFFFFF" stroke="#47A1AD" stroke-width="1.5"/>
+    <text class="legend" x="352" y="567">External</text>
+    <rect x="432" y="556" width="20" height="14" fill="#FFFFFF" stroke="#003D4F" stroke-width="1.5" stroke-dasharray="6 3"/>
+    <text class="legend" x="460" y="567">PostgreSQL table</text>
+    <line class="arrow" x1="588" y1="563" x2="620" y2="563" marker-end="url(#am1-arrow)"/>
+    <text class="legend" x="628" y="567">Call / write</text>
+    <line class="arrow link" x1="724" y1="563" x2="756" y2="563" marker-end="url(#am1-arrow-link)"/>
+    <text class="legend" x="764" y="567">HTTPS to Claude</text>
+    <line class="arrow dashed" x1="884" y1="563" x2="916" y2="563" marker-end="url(#am1-arrow)"/>
+    <text class="legend" x="924" y="567">Return / read</text>
+  </svg>
+  </div>
+</main>
+</body>
+</html>

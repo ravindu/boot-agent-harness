@@ -237,7 +237,7 @@ public class AgentLoop {
         AgentRunResult finish(RunStatus status, String detail, String answer) {
             CitationChecker.Report citations = CitationChecker.check(answer, toolContext.sources());
             AgentRunResult result = new AgentRunResult(id, status, detail, answer, citations.cited(),
-                    citations.invented(), turns, usage, cost);
+                    citations.invented(), toolContext.sources().all(), turns, usage, cost);
             recorder.runFinished(id, result, clock.instant());
             log.info("run finished runId={} status={} turns={} tokens={} costUsd={} citations={} invented={}",
                     id, status, turns, usage.total(), cost, citations.cited().size(), citations.invented().size());
