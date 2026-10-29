@@ -13,3 +13,13 @@ Content-Type: application/json
 
 ### Trace of the last run: every model call and tool call with tokens, cost and latency
 GET http://localhost:8080/api/agent/runs/{{runId}}
+
+### Answer a paused run. Send this only when the previous response was 202 WAITING_FOR_USER (pendingQuestion says what Claude asked).
+POST http://localhost:8080/api/agent/runs/{{runId}}/answer
+Content-Type: application/json
+
+{
+  "answer": "Spring Boot 4.1 with Testcontainers"
+}
+
+> {% client.global.set("runId", response.body.runId); %}

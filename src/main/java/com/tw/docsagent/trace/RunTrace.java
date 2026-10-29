@@ -24,6 +24,7 @@ public record RunTrace(
         BigDecimal costUsd,
         Instant startedAt,
         Instant finishedAt,
+        String pendingQuestion,
         List<Step> steps) {
 
     /** One model call or tool call. Fields of the other step type are null. */
