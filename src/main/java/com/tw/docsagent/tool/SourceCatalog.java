@@ -30,6 +30,21 @@ public class SourceCatalog {
         });
     }
 
+    /**
+     * Rebuilds the catalog of a paused run from its stored sources. Labels come back as they were
+     * because they are handed out in the same order.
+     */
+    public static SourceCatalog restore(List<Source> sources) {
+        SourceCatalog catalog = new SourceCatalog();
+        for (Source source : sources) {
+            Source restored = catalog.register(source.chunkId(), source.title(), source.url());
+            if (!restored.label().equals(source.label())) {
+                throw new IllegalStateException("Stored source " + source.label() + " restored as " + restored.label());
+            }
+        }
+        return catalog;
+    }
+
     public Optional<Source> resolve(String label) {
         return Optional.ofNullable(byLabel.get(label));
     }

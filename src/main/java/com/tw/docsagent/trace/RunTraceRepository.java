@@ -50,6 +50,7 @@ public class RunTraceRepository {
                 rs.getBigDecimal("cost_usd"),
                 instant(rs.getTimestamp("started_at")),
                 instant(rs.getTimestamp("finished_at")),
+                rs.getString("pending_question"),
                 steps);
     }
 

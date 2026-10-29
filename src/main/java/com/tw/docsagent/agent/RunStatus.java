@@ -14,6 +14,8 @@ public enum RunStatus {
     TIMED_OUT,
     /** Claude's answer was cut off by {@code max_tokens}. */
     TRUNCATED,
+    /** Claude called askUser; the run waits for a human answer (HTTP 202). Resumes with the answer. */
+    WAITING_FOR_USER,
     /** Claude declined ({@code stop_reason=refusal}); the category is in the status detail. */
     REFUSED,
     /** API error after the SDK's retries, or an unexpected stop reason. */

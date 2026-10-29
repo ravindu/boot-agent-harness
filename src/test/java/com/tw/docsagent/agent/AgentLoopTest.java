@@ -6,6 +6,7 @@ import static com.tw.docsagent.agent.ScriptedResponses.text;
 import static com.tw.docsagent.agent.ScriptedResponses.toolUse;
 import static com.tw.docsagent.agent.ScriptedResponses.toolUseResponse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -20,7 +21,9 @@ import com.anthropic.models.messages.MessageCreateParams;
 import com.anthropic.models.messages.MessageParam;
 import com.anthropic.models.messages.RefusalStopDetails;
 import com.anthropic.models.messages.StopReason;
+import com.anthropic.models.messages.TextBlockParam;
 import com.anthropic.models.messages.ThinkingBlock;
+import com.anthropic.models.messages.ToolUseBlock;
 import com.anthropic.models.messages.ToolResultBlockParam;
 import com.tw.docsagent.config.AgentLimitsProperties;
 import com.tw.docsagent.config.AnthropicProperties;
@@ -42,6 +45,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -95,7 +99,7 @@ class AgentLoopTest {
     }
 
     private static List<ToolResultBlockParam> toolResults(MessageParam message) {
-        return message.content().asBlockParams().stream()
+        return message.content().blockParams().orElse(List.of()).stream()
                 .flatMap(block -> block.toolResult().stream())
                 .toList();
     }
@@ -140,6 +144,35 @@ class AgentLoopTest {
     }
 
     @Test
+    void newestToolResultCarriesTheCacheBreakpointButTheStoredHistoryDoesNot() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(toolUse("toolu_1", "searchDocs", Map.of("query", "a"))),
+                toolUseResponse(toolUse("toolu_2", "searchDocs", Map.of("query", "b"))),
+                response(StopReason.END_TURN, 2000, text("Done [S1][S2].")));
+
+        loop().run("question");
+
+        List<MessageCreateParams> requests = sentRequests(3);
+        // Request 3: the newest message is the second tool result, so it is the breakpoint
+        List<MessageParam> third = requests.get(2).messages();
+        assertThat(toolResults(third.getLast())).singleElement()
+                .satisfies(result -> assertThat(result.cacheControl()).isPresent());
+        // Older tool results are not marked: at most one breakpoint per request besides the system prompt
+        assertThat(toolResults(third.get(2))).singleElement()
+                .satisfies(result -> assertThat(result.cacheControl()).isEmpty());
+        // What the trace stored is the history without the marker (thinking blocks must stay byte-identical)
+        assertThat(recorder.messages).allSatisfy(message -> assertThat(toolResults(message))
+                .allSatisfy(result -> assertThat(result.cacheControl()).isEmpty()));
+    }
+
+    @Test
+    void breakpointIsSkippedWhenTheNewestMessageIsNotAToolResult() {
+        MessageParam question = MessageParam.builder().role(MessageParam.Role.USER).content("q").build();
+
+        assertThat(AgentLoop.withCacheBreakpoint(List.of(question))).containsExactly(question);
+    }
+
+    @Test
     void requestCarriesSystemPromptStrictToolsAndEffort() {
         when(llm.send(any())).thenReturn(response(StopReason.END_TURN, 10, text("Hi")));
 
@@ -147,7 +180,9 @@ class AgentLoopTest {
 
         MessageCreateParams request = sentRequests(1).getFirst();
         assertThat(request.model().asString()).isEqualTo(MODEL);
-        assertThat(request.system().orElseThrow().asString()).contains("Spring Boot 4.1.1", "[S2]");
+        TextBlockParam system = request.system().orElseThrow().asTextBlockParams().getFirst();
+        assertThat(system.text()).contains("Spring Boot 4.1.1", "[S2]");
+        assertThat(system.cacheControl()).isPresent();
         assertThat(request.tools().orElseThrow()).singleElement()
                 .satisfies(tool -> assertThat(tool.asTool().strict()).contains(true));
         assertThat(request.outputConfig().orElseThrow().effort()).hasValueSatisfying(
@@ -317,6 +352,140 @@ class AgentLoopTest {
     }
 
     /** A clock tests can move forward. */
+    // --- askUser: pause and resume ----------------------------------------------------------
+
+    private static ToolUseBlock askUser(String id, String question) {
+        return toolUse(id, "askUser", Map.of("question", question));
+    }
+
+    @Test
+    void askUserPausesTheRunWithTheQuestion() {
+        when(llm.send(any())).thenReturn(toolUseResponse(askUser("toolu_ask", "Which Boot version do you mean?")));
+
+        AgentRunResult result = loop().run("How do I test slices?");
+
+        assertThat(result.status()).isEqualTo(RunStatus.WAITING_FOR_USER);
+        assertThat(result.pendingQuestion()).isEqualTo("Which Boot version do you mean?");
+        assertThat(result.answer()).isNull();
+        assertThat(recorder.finished).isNull();
+        assertThat(recorder.paused.toolUseId()).isEqualTo("toolu_ask");
+        assertThat(recorder.paused.turns()).isEqualTo(1);
+    }
+
+    @Test
+    void resumeSendsTheAnswerAsTheToolResultAndCompletes() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(askUser("toolu_ask", "Which Boot version?")),
+                response(StopReason.END_TURN, 2000, text("For Boot 4.1 use X.")));
+        UUID runId = loop().run("q").runId();
+
+        AgentRunResult result = loop().resume(runId, "Boot 4.1");
+
+        assertThat(result.status()).isEqualTo(RunStatus.COMPLETED);
+        assertThat(result.answer()).isEqualTo("For Boot 4.1 use X.");
+        assertThat(result.runId()).isEqualTo(runId);
+        assertThat(result.turns()).isEqualTo(2);
+        assertThat(result.usage().input()).isEqualTo(3000);
+
+        // Same history as before the pause, plus the answer as the tool_result of Claude's askUser call
+        List<MessageParam> messages = sentRequests(2).get(1).messages();
+        assertThat(messages).hasSize(3);
+        ToolResultBlockParam answer = toolResults(messages.get(2)).getFirst();
+        assertThat(answer.toolUseId()).isEqualTo("toolu_ask");
+        assertThat(answer.content().orElseThrow().asString()).isEqualTo("Boot 4.1");
+    }
+
+    @Test
+    void citationsFromBeforeThePauseStillResolveAfterTheResume() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(toolUse("toolu_1", "searchDocs", Map.of("query", "a"))),
+                toolUseResponse(askUser("toolu_ask", "Which?")),
+                response(StopReason.END_TURN, 10, text("Answer [S1].")));
+        UUID runId = loop().run("q").runId();
+
+        AgentRunResult result = loop().resume(runId, "Boot 4");
+
+        assertThat(result.citations()).extracting("label", "url").containsExactly(
+                tuple("S1", "https://docs/1"));
+        assertThat(result.inventedCitations()).isEmpty();
+    }
+
+    @Test
+    void answeringTwiceRunsTheRunOnlyOnce() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(askUser("toolu_ask", "Which?")),
+                response(StopReason.END_TURN, 10, text("Done.")));
+        UUID runId = loop().run("q").runId();
+        loop().resume(runId, "first");
+
+        assertThatThrownBy(() -> loop().resume(runId, "second")).isInstanceOf(RunNotWaitingException.class);
+        verify(llm, times(2)).send(any());
+    }
+
+    @Test
+    void resumingAnUnknownRunIsNotFound() {
+        assertThatThrownBy(() -> loop().resume(UUID.randomUUID(), "x")).isInstanceOf(NoSuchRunException.class);
+    }
+
+    @Test
+    void askUserMixedWithAnotherToolIsRefusedAndTheRunGoesOn() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(toolUse("toolu_s", "searchDocs", Map.of("query", "x")), askUser("toolu_a", "Which?")),
+                response(StopReason.END_TURN, 10, text("Done [S1].")));
+
+        AgentRunResult result = loop().run("q");
+
+        assertThat(result.status()).isEqualTo(RunStatus.COMPLETED);
+        List<ToolResultBlockParam> results = toolResults(sentRequests(2).get(1).messages().get(2));
+        assertThat(results).hasSize(2);
+        assertThat(results.get(1).toolUseId()).isEqualTo("toolu_a");
+        assertThat(results.get(1).isError()).contains(true);
+        assertThat(results.get(1).content().orElseThrow().asString()).contains("only tool call");
+    }
+
+    @Test
+    void blankAskUserQuestionIsRefusedInsteadOfPausing() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(askUser("toolu_a", "   ")),
+                response(StopReason.END_TURN, 10, text("Done.")));
+
+        AgentRunResult result = loop().run("q");
+
+        assertThat(result.status()).isEqualTo(RunStatus.COMPLETED);
+        assertThat(toolResults(sentRequests(2).get(1).messages().get(2)).getFirst().isError()).contains(true);
+    }
+
+    @Test
+    void timeAWaitingRunSpendsWithTheUserDoesNotCountAgainstTheTimeout() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(askUser("toolu_ask", "Which?")),
+                response(StopReason.END_TURN, 10, text("Done.")));
+        UUID runId = loop().run("q").runId();
+        clock.advance(Duration.ofMinutes(30));
+
+        AgentRunResult result = loop().resume(runId, "yes");
+
+        assertThat(result.status()).isEqualTo(RunStatus.COMPLETED);
+    }
+
+    @Test
+    void activeTimeAfterAResumeStillCountsAgainstTheTimeout() {
+        when(llm.send(any())).thenReturn(
+                toolUseResponse(askUser("toolu_ask", "Which?")),
+                // each model call takes 70 s: the second one ends past the 2-minute run timeout
+                toolUseResponse(toolUse("searchDocs", Map.of("query", "x"))));
+        UUID runId = loop().run("q").runId();
+        clock.advance(Duration.ofMinutes(30));
+
+        when(llm.send(any())).thenAnswer(inv -> {
+            clock.advance(Duration.ofSeconds(70));
+            return toolUseResponse(toolUse("searchDocs", Map.of("query", "x")));
+        });
+        AgentRunResult result = loop().resume(runId, "yes");
+
+        assertThat(result.status()).isEqualTo(RunStatus.TIMED_OUT);
+    }
+
     static final class MutableClock extends Clock {
         private Instant now = Instant.parse("2026-10-12T10:00:00Z");
 
