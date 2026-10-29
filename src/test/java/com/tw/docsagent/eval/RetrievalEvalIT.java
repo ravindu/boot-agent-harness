@@ -88,7 +88,12 @@ class RetrievalEvalIT {
 
         ingestionService.ingestAll();
         GoldenSetChecks.assertEachExpectedTextIsInExactlyOneChunk(questions, GoldenSetChecks.chunkTexts(jdbc));
-        GoldenSetChecks.assertDerivedTraitsMatchTheDocs(questions, GoldenSetChecks.chunksWithIndex(jdbc));
+        // Derived traits (paraphrased, deep-detail, table-or-code) are measured on the default 200-word
+        // chunks. A chunk-size experiment changes them, so it turns this check off with
+        // -Deval.checkDerivedTraits=false; the report records that.
+        if (checkDerivedTraits()) {
+            GoldenSetChecks.assertDerivedTraitsMatchTheDocs(questions, GoldenSetChecks.chunksWithIndex(jdbc));
+        }
 
         Optional<Path> queriesFrom = Optional.ofNullable(System.getProperty("eval.queriesFrom")).map(Path::of)
                 .or(RetrievalEvalIT::newestAgentReport);
@@ -135,7 +140,18 @@ class RetrievalEvalIT {
         config.put("embedding", "all-MiniLM-L6-v2 (local ONNX)");
         config.put("docs", "Boot " + docs.bootVersion() + ", " + docs.pages().size() + " pages");
         config.put("maxWordsPerChunk", String.valueOf(ingestion.maxWordsPerChunk()));
+        // Embedding window: the tokenizer's max length, passed as
+        // -Dspring.ai.embedding.transformer.tokenizer.options.maxLength=… (default: model's 128)
+        config.put("embeddingWindowTokens", System.getProperty(
+                "spring.ai.embedding.transformer.tokenizer.options.maxLength", "128 (model default)"));
+        if (!checkDerivedTraits()) {
+            config.put("derivedTraitCheck", "off (experiment: traits were tagged on 200-word chunks)");
+        }
         return config;
+    }
+
+    private static boolean checkDerivedTraits() {
+        return !"false".equals(System.getProperty("eval.checkDerivedTraits"));
     }
 
     /** Newest agent eval report (has {@code searchQueries}); retrieval reports don't. */
